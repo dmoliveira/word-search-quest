@@ -492,6 +492,64 @@ input[type="range"] {
   background: linear-gradient(135deg, rgba(93, 242, 176, 0.1), rgba(108, 140, 255, 0.09));
 }
 
+.unlock-track-panel {
+  background: linear-gradient(135deg, rgba(255, 209, 102, 0.1), rgba(108, 140, 255, 0.08));
+}
+
+.unlock-track-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.unlock-track-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.85rem 0.95rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.unlock-track-item.unlocked {
+  border-color: rgba(93, 242, 176, 0.35);
+  background: rgba(93, 242, 176, 0.12);
+}
+
+.unlock-track-icon {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.unlock-track-copy {
+  display: grid;
+  gap: 0.08rem;
+}
+
+.unlock-track-title {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.unlock-track-meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.unlock-track-progress {
+  color: var(--text);
+  font-weight: 700;
+}
+
 .next-unlock-card {
   display: grid;
   grid-template-columns: 1.4fr auto;
@@ -640,6 +698,14 @@ input[type="range"] {
 
   .next-unlock-card {
     grid-template-columns: 1fr;
+  }
+
+  .unlock-track-item {
+    grid-template-columns: auto 1fr;
+  }
+
+  .unlock-track-progress {
+    grid-column: 2;
   }
 
   :root {
