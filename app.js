@@ -16,6 +16,12 @@ const PRESETS = {
   veteran: { label: "Veteran", size: 15, wordCount: 12, diagonal: true, reverse: true, timer: true, hints: false, funMode: "Dense overlap" }
 };
 
+const DAILY_CHALLENGE_SETTINGS = Object.freeze({
+  ...PRESETS.balanced,
+  preset: "balanced",
+  theme: "tech"
+});
+
 const ACHIEVEMENTS = [
   { id: "first-win", label: "First clear", icon: "✨", hint: "Win your first board.", test: (stats) => stats.gamesWon >= 1 },
   { id: "speed-runner", label: "Speed runner", icon: "⚡", hint: "Finish a timed board in 2 minutes.", test: (stats) => stats.bestTimeSeconds !== null && stats.bestTimeSeconds <= 120 },
@@ -30,6 +36,7 @@ const elements = {
   statusMessage: document.querySelector("#statusMessage"),
   foundCount: document.querySelector("#foundCount"),
   timerValue: document.querySelector("#timerValue"),
+  statusNote: document.querySelector("#statusNote"),
   heroLeadLabel: document.querySelector("#heroLeadLabel"),
   heroLeadValue: document.querySelector("#heroLeadValue"),
   modeBadge: document.querySelector("#modeBadge"),
@@ -197,6 +204,10 @@ function syncControls() {
 function startGame(seed, mode) {
   captureSettings();
   state.mode = mode;
+  if (mode === "daily") {
+    state.settings = { ...state.settings, ...DAILY_CHALLENGE_SETTINGS };
+    syncControls();
+  }
   state.seed = seed;
   normalizeDailyStreak();
   const puzzle = generatePuzzle({ ...state.settings, seed });
@@ -315,7 +326,7 @@ function renderBoard() {
 function buildBoard() {
   const shouldRestoreFocus = state.restoreBoardFocus;
   elements.board.innerHTML = "";
-  elements.board.style.gridTemplateColumns = `repeat(${state.board.length}, var(--cell-size))`;
+  elements.board.style.gridTemplateColumns = `repeat(${state.board.length}, var(--board-cell-size))`;
   elements.board.dataset.size = String(state.board.length);
   elements.board.classList.remove("is-solved");
   state.board.forEach((row, rowIndex) => {
@@ -403,7 +414,7 @@ function updateModeMessaging() {
   const mode = state.mode;
   const isDaily = mode === "daily";
   elements.modeBadge.textContent = isDaily ? "Daily" : "Custom";
-  elements.setupHeading.textContent = isDaily ? "Daily puzzle controls" : "Custom word search setup";
+  elements.setupHeading.textContent = isDaily ? "Daily challenge details" : "Custom word search setup";
   elements.presetLabelText.textContent = isDaily ? "Daily preset" : "Challenge preset";
   elements.boardTitle.textContent = isDaily ? "Daily puzzle board" : "Custom puzzle board";
   elements.boardSectionTitle.textContent = isDaily ? "Board" : "Custom board";
@@ -415,6 +426,10 @@ function updateModeMessaging() {
     : "Generate endless custom boards with your favorite theme, size, and rule mix for a tailored challenge.";
   elements.heroLeadLabel.textContent = isDaily ? "Today's shared seed" : "Custom board";
   elements.heroLeadValue.textContent = isDaily ? state.seed : `${state.settings.size}×${state.settings.size}`;
+  elements.statusNote.textContent = isDaily
+    ? "Daily challenge settings are fixed so everyone plays the same board and streaks stay fair."
+    : "Custom mode lets you tune size, rules, and hints without affecting your daily streak.";
+  toggleDailyControls(isDaily);
 }
 
 function onPointerDownCell(event) {
@@ -511,13 +526,13 @@ function finalizeSelection(cell) {
   const path = buildPath(state.anchorCell, cell);
   if (!path) {
     setStatus("Selections must stay in a straight line.");
-    clearSelection();
+    keepAnchorSelection();
     return;
   }
   const matchedWord = findMatchedWordForPath(path);
   if (!matchedWord || state.foundWords.has(matchedWord)) {
     setStatus("No match there yet. Try another line.");
-    clearSelection();
+    keepAnchorSelection();
     return;
   }
   state.foundWords.add(matchedWord);
@@ -535,6 +550,11 @@ function finalizeSelection(cell) {
 function clearSelection(clearAnchor = true) {
   state.previewCells = [];
   if (clearAnchor) state.anchorCell = null;
+  renderBoard();
+}
+
+function keepAnchorSelection() {
+  state.previewCells = state.anchorCell ? [state.anchorCell] : [];
   renderBoard();
 }
 
@@ -591,7 +611,7 @@ function renderWinHighlights(elapsedSeconds, previousBestTime, previousBestStrea
 
 function updateStatsOnWin(elapsedSeconds) {
   state.stats.gamesWon += 1;
-  if (state.mode === "daily") {
+  if (state.mode === "daily" && isCanonicalDailySetup()) {
     const todaySeed = createDailySeed();
     if (state.stats.lastDailySeed !== todaySeed) {
       const yesterdaySeed = createDailySeed(Date.now() - DAILY_MS);
@@ -755,6 +775,33 @@ function normalizeDailyStreak() {
     return;
   }
   state.stats.dailyStreak = 0;
+}
+
+function toggleDailyControls(isDaily) {
+  [
+    elements.themeSelect,
+    elements.sizeSelect,
+    elements.wordCountInput,
+    elements.presetSelect,
+    elements.diagonalToggle,
+    elements.reverseToggle,
+    elements.timerToggle,
+    elements.hintsToggle
+  ].forEach((control) => {
+    control.disabled = isDaily;
+    control.setAttribute("aria-disabled", String(isDaily));
+  });
+}
+
+function isCanonicalDailySetup() {
+  return state.settings.theme === DAILY_CHALLENGE_SETTINGS.theme
+    && state.settings.size === DAILY_CHALLENGE_SETTINGS.size
+    && state.settings.wordCount === DAILY_CHALLENGE_SETTINGS.wordCount
+    && state.settings.preset === DAILY_CHALLENGE_SETTINGS.preset
+    && state.settings.diagonal === DAILY_CHALLENGE_SETTINGS.diagonal
+    && state.settings.reverse === DAILY_CHALLENGE_SETTINGS.reverse
+    && state.settings.timer === DAILY_CHALLENGE_SETTINGS.timer
+    && state.settings.hints === DAILY_CHALLENGE_SETTINGS.hints;
 }
 
 function createDailySeed(timestamp = Date.now()) {
