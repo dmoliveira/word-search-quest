@@ -1,0 +1,29 @@
+{
+  "name": "Word Search Quest",
+  "short_name": "WS Quest",
+  "description": "A free online daily word search game with custom puzzles and shareable challenge links.",
+  "start_url": "/word-search-quest/",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#0b1020",
+  "icons": [
+    {
+      "src": "/word-search-quest/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/word-search-quest/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/word-search-quest/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
