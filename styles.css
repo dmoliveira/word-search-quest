@@ -463,6 +463,16 @@ input[type="range"] {
   background: rgba(93, 242, 176, 0.12);
 }
 
+.word-list li.mystery {
+  color: var(--muted);
+  border-style: dashed;
+}
+
+.word-list li.mystery::before {
+  content: "? ";
+  color: var(--warn);
+}
+
 .word-list li.found::before {
   content: "✓ ";
   color: var(--good);

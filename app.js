@@ -10,16 +10,17 @@ const THEMES = {
 };
 
 const PRESETS = {
-  relaxed: { label: "Relaxed", size: 8, wordCount: 6, diagonal: false, reverse: false, timer: false, hints: true, funMode: "Sunday stroll" },
-  balanced: { label: "Balanced", size: 12, wordCount: 8, diagonal: true, reverse: true, timer: true, hints: true, funMode: "Daily spark" },
-  sprint: { label: "Sprint", size: 10, wordCount: 7, diagonal: true, reverse: false, timer: true, hints: true, funMode: "Quick streak" },
-  veteran: { label: "Veteran", size: 15, wordCount: 12, diagonal: true, reverse: true, timer: true, hints: false, funMode: "Dense overlap" }
+  relaxed: { label: "Relaxed", size: 8, wordCount: 6, diagonal: false, reverse: false, timer: false, hints: true, mystery: false, funMode: "Sunday stroll" },
+  balanced: { label: "Balanced", size: 12, wordCount: 8, diagonal: true, reverse: true, timer: true, hints: true, mystery: false, funMode: "Daily spark" },
+  sprint: { label: "Sprint", size: 10, wordCount: 7, diagonal: true, reverse: false, timer: true, hints: true, mystery: false, funMode: "Quick streak" },
+  veteran: { label: "Veteran", size: 15, wordCount: 12, diagonal: true, reverse: true, timer: true, hints: false, mystery: false, funMode: "Dense overlap" }
 };
 
 const DAILY_CHALLENGE_SETTINGS = Object.freeze({
   ...PRESETS.balanced,
   preset: "balanced",
-  theme: "tech"
+  theme: "tech",
+  mystery: false
 });
 
 const ACHIEVEMENTS = [
@@ -86,12 +87,13 @@ const elements = {
   diagonalToggle: document.querySelector("#diagonalToggle"),
   reverseToggle: document.querySelector("#reverseToggle"),
   timerToggle: document.querySelector("#timerToggle"),
-  hintsToggle: document.querySelector("#hintsToggle")
+  hintsToggle: document.querySelector("#hintsToggle"),
+  mysteryToggle: document.querySelector("#mysteryToggle")
 };
 
 const state = {
   mode: "daily",
-  settings: { ...PRESETS.balanced, preset: "balanced", theme: "tech" },
+  settings: { ...PRESETS.balanced, preset: "balanced", theme: "tech", mystery: false },
   seed: "",
   board: [],
   words: [],
@@ -196,6 +198,7 @@ function captureSettings() {
     reverse: elements.reverseToggle.checked,
     timer: elements.timerToggle.checked,
     hints: elements.hintsToggle.checked,
+    mystery: elements.mysteryToggle.checked,
     funMode: PRESETS[sanitizePreset(elements.presetSelect.value)].funMode
   };
 }
@@ -210,6 +213,7 @@ function syncControls() {
   elements.reverseToggle.checked = state.settings.reverse;
   elements.timerToggle.checked = state.settings.timer;
   elements.hintsToggle.checked = state.settings.hints;
+  elements.mysteryToggle.checked = Boolean(state.settings.mystery);
 }
 
 function startGame(seed, mode) {
@@ -385,11 +389,14 @@ function renderWordList() {
   elements.wordList.innerHTML = "";
   state.words.forEach((word) => {
     const item = document.createElement("li");
-    item.textContent = word;
-    if (state.foundWords.has(word)) item.classList.add("found");
+    const found = state.foundWords.has(word);
+    item.textContent = state.settings.mystery && !found ? `Hidden word ${state.words.indexOf(word) + 1}` : word;
+    if (found) item.classList.add("found");
+    if (!found && state.settings.mystery) item.classList.add("mystery");
     elements.wordList.append(item);
   });
-  elements.remainingWords.textContent = `${state.words.length - state.foundWords.size} left`;
+  const remaining = state.words.length - state.foundWords.size;
+  elements.remainingWords.textContent = state.settings.mystery ? `${remaining} hidden` : `${remaining} left`;
 }
 
 function renderAchievements() {
@@ -450,7 +457,7 @@ function updateSummaryLabels() {
   elements.activePresetLabel.textContent = PRESETS[state.settings.preset].label;
   elements.activeThemeLabel.textContent = capitalize(state.settings.theme);
   elements.activeRulesLabel.textContent = `${state.settings.diagonal ? "Diagonal" : "Straight"} • ${state.settings.reverse ? "Reverse" : "Forward"}`;
-  elements.funModeLabel.textContent = state.settings.funMode;
+  elements.funModeLabel.textContent = state.settings.mystery ? `${state.settings.funMode} • Mystery` : state.settings.funMode;
 }
 
 function updateModeMessaging() {
@@ -464,6 +471,9 @@ function updateModeMessaging() {
   elements.boardHelper.textContent = isDaily
     ? "Drag across letters or use click/tap start → finish in today's shared word search."
     : "Build your own board, then drag across letters or use click/tap start → finish to solve it.";
+  if (state.settings.mystery) {
+    elements.boardHelper.textContent += " Mystery mode hides the full word list until you reveal each word.";
+  }
   elements.modeDescription.textContent = isDaily
     ? "Everyone gets the same daily word search seed, so you can compare runs and share the challenge."
     : "Generate endless custom boards with your favorite theme, size, and rule mix for a tailored challenge.";
@@ -649,6 +659,9 @@ function renderWinHighlights(elapsedSeconds, previousBestTime, previousBestStrea
   } else {
     cards.push({ label: "Theme", value: capitalize(state.settings.theme) });
   }
+  if (state.settings.mystery) {
+    cards[1] = { label: "Mode", value: "Mystery" };
+  }
   elements.winHighlights.innerHTML = cards.map((card) => `<div class="win-chip"><span>${card.label}</span><strong>${card.value}</strong></div>`).join("");
 }
 
@@ -703,6 +716,7 @@ function updateUrl() {
   url.searchParams.set("reverse", state.settings.reverse);
   url.searchParams.set("timer", state.settings.timer);
   url.searchParams.set("hints", state.settings.hints);
+  url.searchParams.set("mystery", state.settings.mystery);
   window.history.replaceState({}, "", url);
 }
 
@@ -723,6 +737,7 @@ function readConfigFromUrl() {
       reverse: parseBoolean(params.get("reverse"), PRESETS[preset].reverse),
       timer: parseBoolean(params.get("timer"), PRESETS[preset].timer),
       hints: parseBoolean(params.get("hints"), PRESETS[preset].hints),
+      mystery: parseBoolean(params.get("mystery"), false),
       funMode: PRESETS[preset].funMode
     }
   };
@@ -829,7 +844,8 @@ function toggleDailyControls(isDaily) {
     elements.diagonalToggle,
     elements.reverseToggle,
     elements.timerToggle,
-    elements.hintsToggle
+    elements.hintsToggle,
+    elements.mysteryToggle
   ].forEach((control) => {
     control.disabled = isDaily;
     control.setAttribute("aria-disabled", String(isDaily));
