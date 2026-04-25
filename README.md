@@ -1,15 +1,25 @@
-# Word Quest Search
+# Word Search Quest
 
-A polished, static word-search game built for GitHub Pages.
+Word Search Quest is a free online daily word search game built as a static site for GitHub Pages.
 
 ## Highlights
 
-- Daily puzzle with a shared seed
-- Endless custom mode with thousands of setup combinations
+- Free daily word search puzzle with a shared seed
+- Endless custom word search mode with thousands of setup combinations
 - Configurable grid size, word count, diagonals, reverse words, timer, and hints
 - Touch, mouse, and keyboard-friendly board interaction
 - Local streaks, wins, best times, and lightweight achievements
 - Shareable challenge links without accounts or a backend
+
+## SEO targets
+
+This repo is optimized around these search phrases:
+
+- daily word search
+- free online word search
+- word search game
+- custom word search
+- browser puzzle game
 
 ## Play locally
 
@@ -30,6 +40,10 @@ Then open `http://localhost:4173`.
 
 Because the app is static HTML, CSS, and JavaScript, no build step is required.
 
+The live GitHub Pages URL is:
+
+`https://dmoliveira.github.io/word-search-quest/`
+
 ## Gameplay
 
 - Find words horizontally, vertically, diagonally, and optionally in reverse.
@@ -43,3 +57,7 @@ Because the app is static HTML, CSS, and JavaScript, no build step is required.
 - Challenge presets
 - “Spark” hints to reveal a starting letter
 - Achievement badges for first win, speed, daily streaks, and veteran clears
+
+## Why this repo name
+
+`word-search-quest` is short, readable, and aligned with how players search for daily word search games and free browser word puzzles.

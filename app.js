@@ -1,4 +1,5 @@
-const STORAGE_KEY = "word-quest-search-state";
+const STORAGE_KEY = "word-search-quest-state";
+const LEGACY_STORAGE_KEYS = ["word-quest-search-state"];
 const DAILY_MS = 24 * 60 * 60 * 1000;
 
 const THEMES = {
@@ -543,9 +544,9 @@ function updateStatsOnWin(elapsedSeconds) {
 
 function shareChallenge() {
   const url = new URL(window.location.href);
-  const text = `Try my Word Quest Search ${state.mode} puzzle: ${url.toString()}`;
+  const text = `Try my Word Search Quest ${state.mode} puzzle: ${url.toString()}`;
   if (navigator.share) {
-    navigator.share({ title: "Word Quest Search", text, url: url.toString() }).catch(() => copyToClipboard(url.toString()));
+    navigator.share({ title: "Word Search Quest", text, url: url.toString() }).catch(() => copyToClipboard(url.toString()));
     return;
   }
   copyToClipboard(url.toString());
@@ -657,8 +658,14 @@ function setStatus(text) {
 
 function loadStats() {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? { ...defaultStats(), ...JSON.parse(raw) } : defaultStats();
+    const storedKeys = [STORAGE_KEY, ...LEGACY_STORAGE_KEYS];
+    for (const key of storedKeys) {
+      const raw = window.localStorage.getItem(key);
+      if (raw) {
+        return { ...defaultStats(), ...JSON.parse(raw) };
+      }
+    }
+    return defaultStats();
   } catch {
     return defaultStats();
   }
