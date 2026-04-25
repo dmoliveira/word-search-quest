@@ -68,6 +68,11 @@ const elements = {
   nextUnlockTitle: document.querySelector("#nextUnlockTitle"),
   nextUnlockProgress: document.querySelector("#nextUnlockProgress"),
   nextUnlockHint: document.querySelector("#nextUnlockHint"),
+  playNextMeta: document.querySelector("#playNextMeta"),
+  playNextTitle: document.querySelector("#playNextTitle"),
+  playNextFocus: document.querySelector("#playNextFocus"),
+  playNextHint: document.querySelector("#playNextHint"),
+  playNextButton: document.querySelector("#playNextButton"),
   winHighlights: document.querySelector("#winHighlights"),
   winDialog: document.querySelector("#winDialog"),
   winSummary: document.querySelector("#winSummary"),
@@ -178,6 +183,7 @@ function bindEvents() {
     startGame(state.mode === "daily" ? createDailySeed() : randomSeed(), state.mode);
   });
   elements.closeDialogButton.addEventListener("click", () => elements.winDialog.close());
+  elements.playNextButton.addEventListener("click", playRecommendedChallenge);
   window.addEventListener("pointerup", handleGlobalPointerUp);
 }
 
@@ -426,10 +432,15 @@ function updateProgress() {
 function renderProgressionPanel() {
   const nextUnlock = getNextUnlock();
   const rank = [...QUEST_RANKS].reverse().find((item) => state.stats.gamesWon >= item.minWins) || QUEST_RANKS[0];
+  const recommendation = getRecommendedChallenge();
   elements.questRank.textContent = rank.label;
   elements.nextUnlockTitle.textContent = nextUnlock.label;
   elements.nextUnlockProgress.textContent = `${nextUnlock.current} / ${nextUnlock.target}`;
   elements.nextUnlockHint.textContent = nextUnlock.hint;
+  elements.playNextMeta.textContent = `${recommendation.modeLabel} • ${recommendation.presetLabel}`;
+  elements.playNextTitle.textContent = recommendation.title;
+  elements.playNextFocus.textContent = recommendation.focus;
+  elements.playNextHint.textContent = recommendation.hint;
 }
 
 function getNextUnlock() {
@@ -451,6 +462,88 @@ function getNextUnlock() {
     };
   }
   return { label: "Quest board complete", current: ACHIEVEMENTS.length, target: ACHIEVEMENTS.length, hint: "All current achievement goals are unlocked — keep sharpening your times." };
+}
+
+function getRecommendedChallenge() {
+  if (state.stats.gamesWon < 1) {
+    return {
+      mode: "custom",
+      preset: "relaxed",
+      theme: "animals",
+      title: "Relaxed starter board",
+      focus: "First clear",
+      hint: "Best route to land your first win with a smaller, friendlier grid.",
+      modeLabel: "Custom",
+      presetLabel: PRESETS.relaxed.label
+    };
+  }
+  if (state.stats.bestDailyStreak < 3) {
+    return {
+      mode: "daily",
+      preset: DAILY_CHALLENGE_SETTINGS.preset,
+      theme: DAILY_CHALLENGE_SETTINGS.theme,
+      title: "Daily shared board",
+      focus: "Daily keeper",
+      hint: "Best route to extend your streak and unlock the daily progression badge.",
+      modeLabel: "Daily",
+      presetLabel: PRESETS[DAILY_CHALLENGE_SETTINGS.preset].label
+    };
+  }
+  if (state.stats.veteranWins < 1) {
+    return {
+      mode: "custom",
+      preset: "veteran",
+      theme: "tech",
+      title: "Veteran challenge",
+      focus: "Veteran hunter",
+      hint: "Best route to unlock your first veteran clear and prove you can handle dense boards.",
+      modeLabel: "Custom",
+      presetLabel: PRESETS.veteran.label
+    };
+  }
+  if (state.stats.bestTimeSeconds === null || state.stats.bestTimeSeconds > 120) {
+    return {
+      mode: "custom",
+      preset: "sprint",
+      theme: "nature",
+      title: "Sprint run",
+      focus: "Speed runner",
+      hint: "Best route to chase a sub-two-minute clear with a faster board setup.",
+      modeLabel: "Custom",
+      presetLabel: PRESETS.sprint.label
+    };
+  }
+  return {
+    mode: "custom",
+    preset: "balanced",
+    theme: "world",
+    title: "Mystery challenge",
+    focus: "Mastery loop",
+    hint: "Mix in a custom run and keep sharpening your times and discovery skills.",
+    modeLabel: "Custom",
+    presetLabel: PRESETS.balanced.label
+  };
+}
+
+function playRecommendedChallenge() {
+  const recommendation = getRecommendedChallenge();
+  if (recommendation.mode === "daily") {
+    applyPreset(DAILY_CHALLENGE_SETTINGS.preset);
+    state.settings = { ...state.settings, ...DAILY_CHALLENGE_SETTINGS, preset: DAILY_CHALLENGE_SETTINGS.preset, theme: DAILY_CHALLENGE_SETTINGS.theme };
+    syncControls();
+    startGame(createDailySeed(), "daily");
+    return;
+  }
+  applyPreset(recommendation.preset);
+  state.settings = {
+    ...state.settings,
+    ...PRESETS[recommendation.preset],
+    preset: recommendation.preset,
+    theme: recommendation.theme,
+    mystery: recommendation.title === "Mystery challenge"
+  };
+  syncControls();
+  startGame(randomSeed(), "custom");
 }
 
 function updateSummaryLabels() {
@@ -667,7 +760,7 @@ function renderWinHighlights(elapsedSeconds, previousBestTime, previousBestStrea
 
 function updateStatsOnWin(elapsedSeconds) {
   state.stats.gamesWon += 1;
-  if (state.mode === "daily" && isCanonicalDailySetup()) {
+  if (state.mode === "daily" && isCanonicalDailySetup() && state.seed === createDailySeed()) {
     const todaySeed = createDailySeed();
     if (state.stats.lastDailySeed !== todaySeed) {
       const yesterdaySeed = createDailySeed(Date.now() - DAILY_MS);
@@ -752,7 +845,7 @@ function findMatchedWordForPath(path) {
       return false;
     }
     const placementKey = placement.path.map(({ row, col }) => cellKey(row, col)).join("|");
-    return placementKey === pathKey || placementKey === reversedPathKey;
+    return placementKey === pathKey || (state.settings.reverse && placementKey === reversedPathKey);
   });
 }
 
