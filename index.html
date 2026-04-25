@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Play Word Search Quest, a free online daily word search game with custom puzzles, endless boards, shareable challenge links, and keyboard-friendly play."
+      content="Play Word Search Quest, a free online daily word search game with custom word search options, endless boards, shareable challenge links, and keyboard-friendly browser play."
     />
     <meta
       name="keywords"
@@ -18,14 +18,14 @@
     <meta property="og:title" content="Word Search Quest - Free Daily Word Search Game" />
     <meta
       property="og:description"
-      content="Play a free online daily word search, customize your grid, and share challenge links in Word Search Quest."
+      content="Play a free online daily word search, build a custom word search, and share challenge links in Word Search Quest."
     />
     <meta property="og:url" content="https://dmoliveira.github.io/word-search-quest/" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Word Search Quest - Free Daily Word Search Game" />
     <meta
       name="twitter:description"
-      content="Daily word search puzzles, endless custom boards, and shareable challenge links in one free browser game."
+      content="Free online daily word search puzzles, custom word search boards, and shareable challenge links in one browser game."
     />
     <title>Word Search Quest | Free Daily Word Search Game</title>
     <script type="application/ld+json">
@@ -34,7 +34,7 @@
         "@type": "VideoGame",
         "name": "Word Search Quest",
         "url": "https://dmoliveira.github.io/word-search-quest/",
-        "description": "A free online daily word search game with endless custom boards, shareable challenge links, and accessible keyboard, touch, and mouse play.",
+        "description": "A free online daily word search game with custom word search settings, endless boards, shareable challenge links, and accessible keyboard, touch, and mouse play.",
         "applicationCategory": "Game",
         "genre": ["Word Game", "Puzzle Game"],
         "operatingSystem": "Web",
@@ -53,11 +53,15 @@
     <div class="page-shell">
       <header class="hero card">
         <div class="hero-copy">
-          <p class="eyebrow">Free Daily Word Search • Browser Game</p>
+          <p class="eyebrow">Free Online Word Search • Daily Puzzle Game</p>
           <h1>Word Search Quest</h1>
           <p class="hero-text">
-            Play a free online daily word search, then switch to endless custom puzzles with
-            adjustable grids, themes, and challenge rules for casual and veteran players.
+            Play a free online daily word search every day, then build a custom word search
+            with adjustable grids, themes, and challenge rules for casual solvers and veteran players.
+          </p>
+          <p class="muted">
+            Enjoy a fast browser puzzle game with endless replay value, accessible controls,
+            and shareable word search challenges you can send to friends.
           </p>
           <div class="hero-actions">
             <button type="button" id="playDaily" class="btn btn-primary">Play Daily Word Search</button>
@@ -84,7 +88,7 @@
         <aside class="panel-stack">
           <section class="card panel">
             <div class="panel-header">
-              <h2>Challenge setup</h2>
+              <h2>Custom word search setup</h2>
               <span id="modeBadge" class="pill">Daily</span>
             </div>
 
@@ -108,7 +112,7 @@
                 <span id="wordCountValue" class="value-tag">8</span>
               </label>
               <label>
-                Challenge preset
+                Daily puzzle preset
                 <select name="preset" id="presetSelect"></select>
               </label>
               <label class="checkbox-row">
@@ -125,7 +129,7 @@
               </label>
               <label class="checkbox-row">
                 <input type="checkbox" name="hints" id="hintsToggle" checked />
-                Enable spark hints
+                Enable word search hints
               </label>
             </form>
 
@@ -196,8 +200,8 @@
           <section class="card board-panel">
             <div class="board-header">
               <div>
-                <h2>Board</h2>
-                <p class="muted">Drag across letters or use click/tap start → finish.</p>
+                <h2>Daily puzzle board</h2>
+                <p class="muted">Drag across letters or use click/tap start → finish in this free online word search.</p>
               </div>
               <div class="legend">
                 <span><i class="legend-chip focus"></i> Focus</span>
@@ -210,7 +214,7 @@
 
           <section class="card words-panel">
             <div class="panel-header">
-              <h2>Word list</h2>
+              <h2>Word search list</h2>
               <span id="remainingWords" class="pill">0 left</span>
             </div>
             <ul id="wordList" class="word-list"></ul>
