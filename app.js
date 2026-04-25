@@ -17,10 +17,10 @@ const PRESETS = {
 };
 
 const ACHIEVEMENTS = [
-  { id: "first-win", label: "First clear", test: (stats) => stats.gamesWon >= 1 },
-  { id: "speed-runner", label: "Speed runner", test: (stats) => stats.bestTimeSeconds !== null && stats.bestTimeSeconds <= 120 },
-  { id: "daily-keeper", label: "Daily keeper", test: (stats) => stats.bestDailyStreak >= 3 },
-  { id: "veteran-hunter", label: "Veteran hunter", test: (stats) => stats.veteranWins >= 1 }
+  { id: "first-win", label: "First clear", icon: "✨", hint: "Win your first board.", test: (stats) => stats.gamesWon >= 1 },
+  { id: "speed-runner", label: "Speed runner", icon: "⚡", hint: "Finish a timed board in 2 minutes.", test: (stats) => stats.bestTimeSeconds !== null && stats.bestTimeSeconds <= 120 },
+  { id: "daily-keeper", label: "Daily keeper", icon: "🔥", hint: "Reach a 3-day daily streak.", test: (stats) => stats.bestDailyStreak >= 3 },
+  { id: "veteran-hunter", label: "Veteran hunter", icon: "🏆", hint: "Clear a veteran challenge.", test: (stats) => stats.veteranWins >= 1 }
 ];
 
 const elements = {
@@ -49,6 +49,7 @@ const elements = {
   bestStreakStat: document.querySelector("#bestStreakStat"),
   veteranWinsStat: document.querySelector("#veteranWinsStat"),
   achievementList: document.querySelector("#achievementList"),
+  winHighlights: document.querySelector("#winHighlights"),
   winDialog: document.querySelector("#winDialog"),
   winSummary: document.querySelector("#winSummary"),
   playAgainButton: document.querySelector("#playAgainButton"),
@@ -89,6 +90,7 @@ const state = {
   suppressClickAfterPointer: false,
   focusedCell: { row: 0, col: 0 },
   restoreBoardFocus: false,
+  boardBuilt: false,
   startTime: Date.now(),
   timerInterval: null,
   stats: loadStats()
@@ -212,6 +214,7 @@ function startGame(seed, mode) {
   state.pointerHadAnchor = false;
   state.suppressClickAfterPointer = false;
   state.restoreBoardFocus = false;
+  state.boardBuilt = false;
   state.startTime = Date.now();
   clearInterval(state.timerInterval);
   if (state.settings.timer) {
@@ -303,13 +306,21 @@ function fillBoard(board, rng) {
 }
 
 function renderBoard() {
+  if (!state.boardBuilt) {
+    buildBoard();
+  }
+  refreshBoardState();
+}
+
+function buildBoard() {
   const shouldRestoreFocus = state.restoreBoardFocus;
   elements.board.innerHTML = "";
   elements.board.style.gridTemplateColumns = `repeat(${state.board.length}, var(--cell-size))`;
+  elements.board.dataset.size = String(state.board.length);
+  elements.board.classList.remove("is-solved");
   state.board.forEach((row, rowIndex) => {
     row.forEach((letter, colIndex) => {
       const button = document.createElement("button");
-      const key = cellKey(rowIndex, colIndex);
       button.type = "button";
       button.className = "board-cell";
       button.textContent = letter;
@@ -317,11 +328,6 @@ function renderBoard() {
       button.dataset.col = String(colIndex);
       button.setAttribute("role", "gridcell");
       button.setAttribute("aria-label", `Row ${rowIndex + 1} column ${colIndex + 1}: ${letter}`);
-      button.tabIndex = rowIndex === state.focusedCell.row && colIndex === state.focusedCell.col ? 0 : -1;
-      if (state.foundCells.has(key)) button.classList.add("found");
-      if (state.previewCells.some((cell) => cellKey(cell.row, cell.col) === key)) button.classList.add("preview");
-      if (state.hintCells.includes(key)) button.classList.add("hint");
-      if (state.anchorCell && cellKey(state.anchorCell.row, state.anchorCell.col) === key) button.classList.add("anchor");
       button.addEventListener("pointerdown", onPointerDownCell);
       button.addEventListener("pointerenter", onPointerEnterCell);
       button.addEventListener("click", onClickCell);
@@ -332,9 +338,25 @@ function renderBoard() {
       elements.board.append(button);
     });
   });
+  state.boardBuilt = true;
+  refreshBoardState();
   if (shouldRestoreFocus) {
     focusCell(state.focusedCell.row, state.focusedCell.col);
   }
+}
+
+function refreshBoardState() {
+  const previewKeys = new Set(state.previewCells.map((cell) => cellKey(cell.row, cell.col)));
+  const hintKeys = new Set(state.hintCells);
+  const anchorKey = state.anchorCell ? cellKey(state.anchorCell.row, state.anchorCell.col) : null;
+  elements.board.querySelectorAll(".board-cell").forEach((button) => {
+    const key = cellKey(Number(button.dataset.row), Number(button.dataset.col));
+    button.classList.toggle("found", state.foundCells.has(key));
+    button.classList.toggle("preview", previewKeys.has(key));
+    button.classList.toggle("hint", hintKeys.has(key));
+    button.classList.toggle("anchor", anchorKey === key);
+    button.tabIndex = Number(button.dataset.row) === state.focusedCell.row && Number(button.dataset.col) === state.focusedCell.col ? 0 : -1;
+  });
 }
 
 function renderWordList() {
@@ -352,8 +374,9 @@ function renderAchievements() {
   elements.achievementList.innerHTML = "";
   ACHIEVEMENTS.forEach((achievement) => {
     const item = document.createElement("li");
-    item.textContent = achievement.label;
-    if (achievement.test(state.stats)) item.classList.add("unlocked");
+    const unlocked = achievement.test(state.stats);
+    item.innerHTML = `<span class="achievement-badge" aria-hidden="true">${achievement.icon}</span><span class="achievement-copy"><span class="achievement-title">${achievement.label}</span><span class="achievement-meta">${unlocked ? "Unlocked" : achievement.hint}</span></span>`;
+    if (unlocked) item.classList.add("unlocked");
     elements.achievementList.append(item);
   });
   elements.bestStreakStat.textContent = String(state.stats.bestDailyStreak);
@@ -535,13 +558,35 @@ function revealHint() {
 function completePuzzle() {
   clearInterval(state.timerInterval);
   const elapsedSeconds = Math.max(1, Math.round((Date.now() - state.startTime) / 1000));
+  const previousBestTime = state.stats.bestTimeSeconds;
+  const previousBestStreak = state.stats.bestDailyStreak;
   updateStatsOnWin(elapsedSeconds);
   updateProgress();
   renderAchievements();
+  renderWinHighlights(elapsedSeconds, previousBestTime, previousBestStreak);
   elements.winSummary.textContent = `Solved in ${formatSeconds(elapsedSeconds)} on ${PRESETS[state.settings.preset].label} with the ${capitalize(state.settings.theme)} pack.`;
+  elements.board.classList.remove("is-solved");
+  void elements.board.offsetWidth;
+  elements.board.classList.add("is-solved");
   if (typeof elements.winDialog.showModal === "function") {
     elements.winDialog.showModal();
   }
+}
+
+function renderWinHighlights(elapsedSeconds, previousBestTime, previousBestStreak) {
+  const cards = [
+    { label: "Clear time", value: formatSeconds(elapsedSeconds) },
+    { label: "Mode", value: state.mode === "daily" ? "Daily" : "Custom" },
+    { label: "Streak", value: state.mode === "daily" ? `${state.stats.dailyStreak} day${state.stats.dailyStreak === 1 ? "" : "s"}` : PRESETS[state.settings.preset].label }
+  ];
+  if (state.settings.timer && (previousBestTime === null || state.stats.bestTimeSeconds < previousBestTime)) {
+    cards.push({ label: "New best", value: "Personal best" });
+  } else if (state.mode === "daily" && state.stats.bestDailyStreak > previousBestStreak) {
+    cards.push({ label: "Streak high", value: `${state.stats.bestDailyStreak}` });
+  } else {
+    cards.push({ label: "Theme", value: capitalize(state.settings.theme) });
+  }
+  elements.winHighlights.innerHTML = cards.map((card) => `<div class="win-chip"><span>${card.label}</span><strong>${card.value}</strong></div>`).join("");
 }
 
 function updateStatsOnWin(elapsedSeconds) {
