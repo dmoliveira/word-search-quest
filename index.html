@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Play a modern GitHub Pages word search with daily puzzles, endless custom setups, shareable seeds, and veteran-friendly challenge modes."
+    />
+    <title>Word Quest Search</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero card">
+        <div class="hero-copy">
+          <p class="eyebrow">GitHub Pages • Daily + Endless</p>
+          <h1>Word Quest Search</h1>
+          <p class="hero-text">
+            A playful word-search for casual solvers and veteran hunters. Tune the grid,
+            challenge rules, and theme to unlock thousands of combinations.
+          </p>
+          <div class="hero-actions">
+            <button type="button" id="playDaily" class="btn btn-primary">Play Daily Puzzle</button>
+            <button type="button" id="playCustom" class="btn btn-secondary">Generate Endless Board</button>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div>
+            <span class="stat-label">Setup combos</span>
+            <strong id="comboCount">0</strong>
+          </div>
+          <div>
+            <span class="stat-label">Best daily streak</span>
+            <strong id="bestStreakStat">0</strong>
+          </div>
+          <div>
+            <span class="stat-label">Veteran clears</span>
+            <strong id="veteranWinsStat">0</strong>
+          </div>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="panel-stack">
+          <section class="card panel">
+            <div class="panel-header">
+              <h2>Challenge setup</h2>
+              <span id="modeBadge" class="pill">Daily</span>
+            </div>
+
+            <form id="settingsForm" class="settings-grid">
+              <label>
+                Theme
+                <select name="theme" id="themeSelect"></select>
+              </label>
+              <label>
+                Grid size
+                <select name="size" id="sizeSelect">
+                  <option value="8">8 × 8</option>
+                  <option value="10">10 × 10</option>
+                  <option value="12" selected>12 × 12</option>
+                  <option value="15">15 × 15</option>
+                </select>
+              </label>
+              <label>
+                Word count
+                <input name="wordCount" id="wordCountInput" type="range" min="5" max="14" value="8" />
+                <span id="wordCountValue" class="value-tag">8</span>
+              </label>
+              <label>
+                Challenge preset
+                <select name="preset" id="presetSelect"></select>
+              </label>
+              <label class="checkbox-row">
+                <input type="checkbox" name="diagonal" id="diagonalToggle" checked />
+                Allow diagonals
+              </label>
+              <label class="checkbox-row">
+                <input type="checkbox" name="reverse" id="reverseToggle" checked />
+                Allow reverse words
+              </label>
+              <label class="checkbox-row">
+                <input type="checkbox" name="timer" id="timerToggle" checked />
+                Show timer
+              </label>
+              <label class="checkbox-row">
+                <input type="checkbox" name="hints" id="hintsToggle" checked />
+                Enable spark hints
+              </label>
+            </form>
+
+            <div class="action-row">
+              <button type="button" id="applySettings" class="btn btn-primary">Regenerate</button>
+              <button type="button" id="shareChallenge" class="btn btn-secondary">Share</button>
+            </div>
+            <div class="action-row compact">
+              <button type="button" id="hintButton" class="btn btn-ghost">Spark hint</button>
+              <button type="button" id="resetProgress" class="btn btn-ghost">Restart board</button>
+            </div>
+          </section>
+
+          <section class="card panel">
+            <div class="panel-header">
+              <h2>Progress</h2>
+              <span id="timerValue" class="pill accent">00:00</span>
+            </div>
+            <div class="progress-grid">
+              <div>
+                <span class="stat-label">Found</span>
+                <strong id="foundCount">0 / 0</strong>
+              </div>
+              <div>
+                <span class="stat-label">Current streak</span>
+                <strong id="streakValue">0</strong>
+              </div>
+              <div>
+                <span class="stat-label">Games won</span>
+                <strong id="gamesWonValue">0</strong>
+              </div>
+              <div>
+                <span class="stat-label">Best time</span>
+                <strong id="bestTimeValue">—</strong>
+              </div>
+            </div>
+            <p id="statusMessage" class="status-message" aria-live="polite">Generate a board to begin your hunt.</p>
+          </section>
+
+          <section class="card panel">
+            <div class="panel-header">
+              <h2>Achievements</h2>
+            </div>
+            <ul id="achievementList" class="achievement-list"></ul>
+          </section>
+        </aside>
+
+        <section class="game-column">
+          <section class="card challenge-strip">
+            <div class="challenge-card">
+              <span class="stat-label">Preset</span>
+              <strong id="activePresetLabel">Balanced</strong>
+            </div>
+            <div class="challenge-card">
+              <span class="stat-label">Theme</span>
+              <strong id="activeThemeLabel">Tech</strong>
+            </div>
+            <div class="challenge-card">
+              <span class="stat-label">Rules</span>
+              <strong id="activeRulesLabel">Diagonal • Reverse</strong>
+            </div>
+            <div class="challenge-card fun-card">
+              <span class="stat-label">Fun mode</span>
+              <strong id="funModeLabel">Daily Spark</strong>
+            </div>
+          </section>
+
+          <section class="card board-panel">
+            <div class="board-header">
+              <div>
+                <h2>Board</h2>
+                <p class="muted">Drag across letters or use click/tap start → finish.</p>
+              </div>
+              <div class="legend">
+                <span><i class="legend-chip focus"></i> Focus</span>
+                <span><i class="legend-chip preview"></i> Preview</span>
+                <span><i class="legend-chip found"></i> Found</span>
+              </div>
+            </div>
+            <div id="board" class="board" role="grid" aria-label="Word search board"></div>
+          </section>
+
+          <section class="card words-panel">
+            <div class="panel-header">
+              <h2>Word list</h2>
+              <span id="remainingWords" class="pill">0 left</span>
+            </div>
+            <ul id="wordList" class="word-list"></ul>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="winDialog" class="win-dialog">
+      <div class="win-content">
+        <p class="eyebrow">Board cleared</p>
+        <h2>You solved it!</h2>
+        <p id="winSummary"></p>
+        <div class="action-row">
+          <button type="button" id="playAgainButton" class="btn btn-primary">Play again</button>
+          <button type="button" id="closeDialogButton" class="btn btn-secondary">Keep browsing</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
