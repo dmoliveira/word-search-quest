@@ -304,6 +304,7 @@ input[type="range"] {
 }
 
 .board {
+  --board-cell-size: var(--cell-size);
   display: grid;
   gap: 0.34rem;
   justify-content: center;
@@ -334,8 +335,8 @@ input[type="range"] {
 }
 
 .board-cell {
-  width: var(--cell-size);
-  height: var(--cell-size);
+  width: var(--board-cell-size);
+  height: var(--board-cell-size);
   border-radius: 0.95rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.06);
@@ -606,13 +607,24 @@ input[type="range"] {
     --cell-size: clamp(2.75rem, 9vw, 3rem);
   }
 
+  .board[data-size="12"] {
+    --board-cell-size: clamp(2rem, 7.15vw, 2.35rem);
+    gap: 0.22rem;
+  }
+
   .board[data-size="15"] {
+    --board-cell-size: clamp(1.55rem, 5.85vw, 1.88rem);
     gap: 0.18rem;
+  }
+
+  .board[data-size="12"] .board-cell {
+    border-radius: 0.82rem;
+    font-size: clamp(0.8rem, 3.4vw, 0.96rem);
   }
 
   .board[data-size="15"] .board-cell {
     border-radius: 0.75rem;
-    font-size: 0.92rem;
+    font-size: clamp(0.68rem, 3vw, 0.86rem);
   }
 }
 
