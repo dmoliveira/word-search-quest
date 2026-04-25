@@ -29,6 +29,13 @@ const ACHIEVEMENTS = [
   { id: "veteran-hunter", label: "Veteran hunter", icon: "🏆", hint: "Clear a veteran challenge.", test: (stats) => stats.veteranWins >= 1 }
 ];
 
+const QUEST_RANKS = [
+  { label: "Rookie seeker", minWins: 0 },
+  { label: "Daily explorer", minWins: 3 },
+  { label: "Puzzle tracker", minWins: 8 },
+  { label: "Veteran hunter", minWins: 15 }
+];
+
 const elements = {
   board: document.querySelector("#board"),
   wordList: document.querySelector("#wordList"),
@@ -56,6 +63,10 @@ const elements = {
   bestStreakStat: document.querySelector("#bestStreakStat"),
   veteranWinsStat: document.querySelector("#veteranWinsStat"),
   achievementList: document.querySelector("#achievementList"),
+  questRank: document.querySelector("#questRank"),
+  nextUnlockTitle: document.querySelector("#nextUnlockTitle"),
+  nextUnlockProgress: document.querySelector("#nextUnlockProgress"),
+  nextUnlockHint: document.querySelector("#nextUnlockHint"),
   winHighlights: document.querySelector("#winHighlights"),
   winDialog: document.querySelector("#winDialog"),
   winSummary: document.querySelector("#winSummary"),
@@ -392,6 +403,7 @@ function renderAchievements() {
   });
   elements.bestStreakStat.textContent = String(state.stats.bestDailyStreak);
   elements.veteranWinsStat.textContent = String(state.stats.veteranWins);
+  renderProgressionPanel();
 }
 
 function updateProgress() {
@@ -400,7 +412,38 @@ function updateProgress() {
   elements.streakValue.textContent = String(state.stats.dailyStreak);
   elements.gamesWonValue.textContent = String(state.stats.gamesWon);
   elements.bestTimeValue.textContent = formatBestTime(state.stats.bestTimeSeconds);
+  renderProgressionPanel();
   renderWordList();
+}
+
+function renderProgressionPanel() {
+  const nextUnlock = getNextUnlock();
+  const rank = [...QUEST_RANKS].reverse().find((item) => state.stats.gamesWon >= item.minWins) || QUEST_RANKS[0];
+  elements.questRank.textContent = rank.label;
+  elements.nextUnlockTitle.textContent = nextUnlock.label;
+  elements.nextUnlockProgress.textContent = `${nextUnlock.current} / ${nextUnlock.target}`;
+  elements.nextUnlockHint.textContent = nextUnlock.hint;
+}
+
+function getNextUnlock() {
+  if (state.stats.gamesWon < 1) {
+    return { label: "First clear", current: state.stats.gamesWon, target: 1, hint: "Unlocks achievement progress with your first finished board." };
+  }
+  if (state.stats.bestDailyStreak < 3) {
+    return { label: "Daily keeper", current: state.stats.bestDailyStreak, target: 3, hint: "Unlocks achievement progress by extending your daily streak." };
+  }
+  if (state.stats.veteranWins < 1) {
+    return { label: "Veteran hunter", current: state.stats.veteranWins, target: 1, hint: "Unlocks achievement progress by clearing one veteran board." };
+  }
+  if (state.stats.bestTimeSeconds === null || state.stats.bestTimeSeconds > 120) {
+    return {
+      label: "Speed runner",
+      current: state.stats.bestTimeSeconds === null ? "—" : formatSeconds(state.stats.bestTimeSeconds),
+      target: "02:00",
+      hint: "Unlocks achievement progress by finishing a timed board in 2 minutes or less."
+    };
+  }
+  return { label: "Quest board complete", current: ACHIEVEMENTS.length, target: ACHIEVEMENTS.length, hint: "All current achievement goals are unlocked — keep sharpening your times." };
 }
 
 function updateSummaryLabels() {
