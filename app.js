@@ -30,8 +30,15 @@ const elements = {
   statusMessage: document.querySelector("#statusMessage"),
   foundCount: document.querySelector("#foundCount"),
   timerValue: document.querySelector("#timerValue"),
-  comboCount: document.querySelector("#comboCount"),
+  heroLeadLabel: document.querySelector("#heroLeadLabel"),
+  heroLeadValue: document.querySelector("#heroLeadValue"),
   modeBadge: document.querySelector("#modeBadge"),
+  setupHeading: document.querySelector("#setupHeading"),
+  presetLabelText: document.querySelector("#presetLabelText"),
+  modeDescription: document.querySelector("#modeDescription"),
+  boardTitle: document.querySelector("#boardTitle"),
+  boardSectionTitle: document.querySelector("#boardSectionTitle"),
+  boardHelper: document.querySelector("#boardHelper"),
   activePresetLabel: document.querySelector("#activePresetLabel"),
   activeThemeLabel: document.querySelector("#activeThemeLabel"),
   activeRulesLabel: document.querySelector("#activeRulesLabel"),
@@ -101,7 +108,7 @@ function init() {
     state.seed = createDailySeed();
   }
   syncControls();
-  updateComboCount();
+  normalizeDailyStreak();
   renderAchievements();
   startGame(state.seed, state.mode);
 }
@@ -140,14 +147,10 @@ function bindEvents() {
   elements.resetProgress.addEventListener("click", () => startGame(state.seed, state.mode));
   elements.wordCountInput.addEventListener("input", () => {
     elements.wordCountValue.textContent = elements.wordCountInput.value;
-    updateComboCount();
   });
   elements.presetSelect.addEventListener("change", () => {
     applyPreset(elements.presetSelect.value);
-    updateComboCount();
   });
-  [elements.sizeSelect, elements.themeSelect, elements.diagonalToggle, elements.reverseToggle, elements.timerToggle, elements.hintsToggle]
-    .forEach((element) => element.addEventListener("change", updateComboCount));
   elements.playAgainButton.addEventListener("click", () => {
     elements.winDialog.close();
     startGame(state.mode === "daily" ? createDailySeed() : randomSeed(), state.mode);
@@ -193,7 +196,7 @@ function startGame(seed, mode) {
   captureSettings();
   state.mode = mode;
   state.seed = seed;
-  elements.modeBadge.textContent = mode === "daily" ? "Daily" : "Custom";
+  normalizeDailyStreak();
   const puzzle = generatePuzzle({ ...state.settings, seed });
   state.board = puzzle.board;
   state.words = puzzle.words;
@@ -218,10 +221,13 @@ function startGame(seed, mode) {
     elements.timerValue.textContent = "Timer off";
   }
   updateSummaryLabels();
+  updateModeMessaging();
   renderBoard();
   updateProgress();
   updateUrl();
-  setStatus(`New ${mode} board ready. Find ${state.words.length} words.`);
+  setStatus(mode === "daily"
+    ? `Today's shared board is ready. Find ${state.words.length} words.`
+    : `Your custom board is ready. Find ${state.words.length} words.`);
 }
 
 function generatePuzzle({ seed, size, wordCount, theme, diagonal, reverse }) {
@@ -355,6 +361,7 @@ function renderAchievements() {
 }
 
 function updateProgress() {
+  normalizeDailyStreak();
   elements.foundCount.textContent = `${state.foundWords.size} / ${state.words.length}`;
   elements.streakValue.textContent = String(state.stats.dailyStreak);
   elements.gamesWonValue.textContent = String(state.stats.gamesWon);
@@ -369,9 +376,22 @@ function updateSummaryLabels() {
   elements.funModeLabel.textContent = state.settings.funMode;
 }
 
-function updateComboCount() {
-  const combos = Object.keys(THEMES).length * 4 * 10 * 4 * 2 * 2 * 2 * 2;
-  elements.comboCount.textContent = combos.toLocaleString();
+function updateModeMessaging() {
+  const mode = state.mode;
+  const isDaily = mode === "daily";
+  elements.modeBadge.textContent = isDaily ? "Daily" : "Custom";
+  elements.setupHeading.textContent = isDaily ? "Daily puzzle controls" : "Custom word search setup";
+  elements.presetLabelText.textContent = isDaily ? "Daily preset" : "Challenge preset";
+  elements.boardTitle.textContent = isDaily ? "Daily puzzle board" : "Custom puzzle board";
+  elements.boardSectionTitle.textContent = isDaily ? "Board" : "Custom board";
+  elements.boardHelper.textContent = isDaily
+    ? "Drag across letters or use click/tap start → finish in today's shared word search."
+    : "Build your own board, then drag across letters or use click/tap start → finish to solve it.";
+  elements.modeDescription.textContent = isDaily
+    ? "Everyone gets the same daily word search seed, so you can compare runs and share the challenge."
+    : "Generate endless custom boards with your favorite theme, size, and rule mix for a tailored challenge.";
+  elements.heroLeadLabel.textContent = isDaily ? "Today's shared seed" : "Custom board";
+  elements.heroLeadValue.textContent = isDaily ? state.seed : `${state.settings.size}×${state.settings.size}`;
 }
 
 function onPointerDownCell(event) {
@@ -536,7 +556,7 @@ function updateStatsOnWin(elapsedSeconds) {
     }
   }
   if (state.settings.preset === "veteran") state.stats.veteranWins += 1;
-  if (state.stats.bestTimeSeconds === null || elapsedSeconds < state.stats.bestTimeSeconds) {
+  if (state.settings.timer && (state.stats.bestTimeSeconds === null || elapsedSeconds < state.stats.bestTimeSeconds)) {
     state.stats.bestTimeSeconds = elapsedSeconds;
   }
   saveStats();
@@ -609,7 +629,7 @@ function findMatchedWordForPath(path) {
       return false;
     }
     const placementKey = placement.path.map(({ row, col }) => cellKey(row, col)).join("|");
-    return placementKey === pathKey || (state.settings.reverse && placementKey === reversedPathKey);
+    return placementKey === pathKey || placementKey === reversedPathKey;
   });
 }
 
@@ -681,6 +701,15 @@ function saveStats() {
 
 function defaultStats() {
   return { gamesWon: 0, dailyStreak: 0, bestDailyStreak: 0, veteranWins: 0, bestTimeSeconds: null, lastDailySeed: null };
+}
+
+function normalizeDailyStreak() {
+  const todaySeed = createDailySeed();
+  const yesterdaySeed = createDailySeed(Date.now() - DAILY_MS);
+  if (state.stats.lastDailySeed === todaySeed || state.stats.lastDailySeed === yesterdaySeed) {
+    return;
+  }
+  state.stats.dailyStreak = 0;
 }
 
 function createDailySeed(timestamp = Date.now()) {
