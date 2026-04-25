@@ -488,6 +488,10 @@ input[type="range"] {
   background: linear-gradient(135deg, rgba(108, 140, 255, 0.12), rgba(118, 228, 247, 0.08));
 }
 
+.play-next-panel {
+  background: linear-gradient(135deg, rgba(93, 242, 176, 0.1), rgba(108, 140, 255, 0.09));
+}
+
 .next-unlock-card {
   display: grid;
   grid-template-columns: 1.4fr auto;
