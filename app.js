@@ -12,6 +12,7 @@ const THEMES = {
 const PRESETS = {
   relaxed: { label: "Relaxed", size: 8, wordCount: 6, diagonal: false, reverse: false, timer: false, hints: true, mystery: false, funMode: "Sunday stroll" },
   balanced: { label: "Balanced", size: 12, wordCount: 8, diagonal: true, reverse: true, timer: true, hints: true, mystery: false, funMode: "Daily spark" },
+  diagonalDash: { label: "Diagonal Dash", size: 10, wordCount: 8, diagonal: true, diagonalOnly: true, reverse: false, timer: true, hints: false, mystery: false, funMode: "Diagonal dash" },
   sprint: { label: "Sprint", size: 10, wordCount: 7, diagonal: true, reverse: false, timer: true, hints: true, mystery: false, funMode: "Quick streak" },
   reverseRush: { label: "Reverse Rush", size: 10, wordCount: 8, diagonal: true, reverse: true, reverseOnly: true, timer: true, hints: false, mystery: false, funMode: "Reverse rush" },
   veteran: { label: "Veteran", size: 15, wordCount: 12, diagonal: true, reverse: true, timer: true, hints: false, mystery: false, funMode: "Dense overlap" }
@@ -193,6 +194,7 @@ function applyPreset(presetKey) {
   state.settings = {
     ...state.settings,
     mystery: false,
+    diagonalOnly: false,
     reverseOnly: false,
     ...preset,
     preset: presetKey
@@ -212,9 +214,13 @@ function captureSettings() {
     timer: elements.timerToggle.checked,
     hints: elements.hintsToggle.checked,
     mystery: elements.mysteryToggle.checked,
+    diagonalOnly: Boolean(PRESETS[sanitizePreset(elements.presetSelect.value)].diagonalOnly),
     reverseOnly: Boolean(PRESETS[sanitizePreset(elements.presetSelect.value)].reverseOnly),
     funMode: PRESETS[sanitizePreset(elements.presetSelect.value)].funMode
   };
+  if (state.settings.diagonalOnly) {
+    state.settings.diagonal = true;
+  }
   if (state.settings.reverseOnly) {
     state.settings.reverse = true;
   }
@@ -277,12 +283,12 @@ function startGame(seed, mode) {
     : `Your custom board is ready. Find ${state.words.length} words.`);
 }
 
-function generatePuzzle({ seed, size, wordCount, theme, diagonal, reverse, reverseOnly }) {
+function generatePuzzle({ seed, size, wordCount, theme, diagonal, reverse, reverseOnly, diagonalOnly }) {
   const rng = createRng(seed);
   const board = Array.from({ length: size }, () => Array.from({ length: size }, () => ""));
   const themeWords = shuffle([...THEMES[theme]], rng).filter((word) => word.length <= size).slice(0, Math.min(wordCount, THEMES[theme].length));
   const placements = new Map();
-  const directions = getDirections(diagonal, reverse, reverseOnly);
+  const directions = getDirections(diagonal, reverse, reverseOnly, diagonalOnly);
 
   themeWords.forEach((word) => {
     const placed = placeWord(board, word, directions, rng);
@@ -296,10 +302,14 @@ function generatePuzzle({ seed, size, wordCount, theme, diagonal, reverse, rever
   return { board, words, placements };
 }
 
-function getDirections(diagonal, reverse, reverseOnly = false) {
+function getDirections(diagonal, reverse, reverseOnly = false, diagonalOnly = false) {
   const base = [[0, 1], [1, 0]];
   if (diagonal) {
     base.push([1, 1], [1, -1]);
+  }
+  if (diagonalOnly) {
+    const diagonals = [[1, 1], [1, -1]];
+    return reverse ? [...diagonals, ...diagonals.map(([row, col]) => [-row, -col])] : diagonals;
   }
   if (reverseOnly) {
     return base.map(([row, col]) => [-row, -col]);
@@ -530,13 +540,13 @@ function getRecommendedChallenge() {
   }
   return {
     mode: "custom",
-    preset: "reverseRush",
+    preset: "diagonalDash",
     theme: "world",
-    title: "Reverse Rush",
+    title: "Diagonal Dash",
     focus: "Mastery loop",
-    hint: "Push into a reverse-only hunt when you want a sharper veteran-style challenge.",
+    hint: "Push into an all-diagonal hunt when you want a fresh veteran-style challenge.",
     modeLabel: "Custom",
-    presetLabel: PRESETS.reverseRush.label
+    presetLabel: PRESETS.diagonalDash.label
   };
 }
 
@@ -564,9 +574,11 @@ function playRecommendedChallenge() {
 function updateSummaryLabels() {
   elements.activePresetLabel.textContent = PRESETS[state.settings.preset].label;
   elements.activeThemeLabel.textContent = capitalize(state.settings.theme);
-  elements.activeRulesLabel.textContent = state.settings.reverseOnly
-    ? "Diagonal • Reverse only"
-    : `${state.settings.diagonal ? "Diagonal" : "Straight"} • ${state.settings.reverse ? "Reverse" : "Forward"}`;
+  elements.activeRulesLabel.textContent = state.settings.diagonalOnly
+    ? `Diagonal only • ${state.settings.reverse ? "Reverse" : "Forward"}`
+    : state.settings.reverseOnly
+      ? "Diagonal • Reverse only"
+      : `${state.settings.diagonal ? "Diagonal" : "Straight"} • ${state.settings.reverse ? "Reverse" : "Forward"}`;
   elements.funModeLabel.textContent = state.settings.mystery ? `${state.settings.funMode} • Mystery` : state.settings.funMode;
 }
 
@@ -583,6 +595,9 @@ function updateModeMessaging() {
     : "Build your own board, then drag across letters or use click/tap start → finish to solve it.";
   if (state.settings.mystery) {
     elements.boardHelper.textContent += " Mystery mode hides the full word list until you reveal each word.";
+  }
+  if (state.settings.diagonalOnly) {
+    elements.boardHelper.textContent += " Diagonal Dash places every target on diagonal lines only.";
   }
   if (state.settings.reverseOnly) {
     elements.boardHelper.textContent += " Reverse Rush places every target backwards for a more veteran-friendly hunt.";
@@ -851,6 +866,7 @@ function readConfigFromUrl() {
       timer: parseBoolean(params.get("timer"), PRESETS[preset].timer),
       hints: parseBoolean(params.get("hints"), PRESETS[preset].hints),
       mystery: parseBoolean(params.get("mystery"), false),
+      diagonalOnly: Boolean(PRESETS[preset].diagonalOnly),
       reverseOnly: Boolean(PRESETS[preset].reverseOnly),
       funMode: PRESETS[preset].funMode
     }
@@ -968,8 +984,14 @@ function toggleDailyControls(isDaily) {
 }
 
 function updatePresetSpecificLocks() {
+  const diagonalLocked = Boolean(state.settings.diagonalOnly);
   const reverseLocked = Boolean(state.settings.reverseOnly);
   const dailyLocked = state.mode === "daily";
+  elements.diagonalToggle.disabled = dailyLocked || diagonalLocked;
+  elements.diagonalToggle.setAttribute("aria-disabled", String(elements.diagonalToggle.disabled));
+  if (diagonalLocked) {
+    elements.diagonalToggle.checked = true;
+  }
   elements.reverseToggle.disabled = dailyLocked || reverseLocked;
   elements.reverseToggle.setAttribute("aria-disabled", String(elements.reverseToggle.disabled));
   if (reverseLocked) {
