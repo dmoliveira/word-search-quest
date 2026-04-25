@@ -39,6 +39,12 @@ const QUEST_RANKS = [
   { label: "Veteran hunter", minWins: 15 }
 ];
 
+const SPECIAL_MODE_UNLOCKS = [
+  { id: "sprint", label: "Sprint", icon: "⚡", hint: "Win 1 board", current: (stats) => stats.gamesWon, target: 1 },
+  { id: "reverseRush", label: "Reverse Rush", icon: "🔁", hint: "Reach a 3-day best streak", current: (stats) => stats.bestDailyStreak, target: 3 },
+  { id: "diagonalDash", label: "Diagonal Dash", icon: "⬘", hint: "Clear 1 veteran board", current: (stats) => stats.veteranWins, target: 1 }
+];
+
 const elements = {
   board: document.querySelector("#board"),
   wordList: document.querySelector("#wordList"),
@@ -66,6 +72,7 @@ const elements = {
   bestStreakStat: document.querySelector("#bestStreakStat"),
   veteranWinsStat: document.querySelector("#veteranWinsStat"),
   achievementList: document.querySelector("#achievementList"),
+  unlockTrackList: document.querySelector("#unlockTrackList"),
   questRank: document.querySelector("#questRank"),
   nextUnlockTitle: document.querySelector("#nextUnlockTitle"),
   nextUnlockProgress: document.querySelector("#nextUnlockProgress"),
@@ -156,6 +163,7 @@ function populateSelectors() {
     option.textContent = preset.label;
     elements.presetSelect.append(option);
   });
+  refreshPresetOptions();
 }
 
 function bindEvents() {
@@ -190,6 +198,9 @@ function bindEvents() {
 }
 
 function applyPreset(presetKey) {
+  if (!isPresetUnlocked(presetKey)) {
+    return;
+  }
   const preset = PRESETS[sanitizePreset(presetKey)];
   state.settings = {
     ...state.settings,
@@ -203,20 +214,21 @@ function applyPreset(presetKey) {
 }
 
 function captureSettings() {
+  const selectedPreset = sanitizeUnlockedPreset(elements.presetSelect.value);
   state.settings = {
     ...state.settings,
     theme: elements.themeSelect.value,
     size: Number(elements.sizeSelect.value),
     wordCount: Number(elements.wordCountInput.value),
-    preset: sanitizePreset(elements.presetSelect.value),
+    preset: selectedPreset,
     diagonal: elements.diagonalToggle.checked,
     reverse: elements.reverseToggle.checked,
     timer: elements.timerToggle.checked,
     hints: elements.hintsToggle.checked,
     mystery: elements.mysteryToggle.checked,
-    diagonalOnly: Boolean(PRESETS[sanitizePreset(elements.presetSelect.value)].diagonalOnly),
-    reverseOnly: Boolean(PRESETS[sanitizePreset(elements.presetSelect.value)].reverseOnly),
-    funMode: PRESETS[sanitizePreset(elements.presetSelect.value)].funMode
+    diagonalOnly: Boolean(PRESETS[selectedPreset].diagonalOnly),
+    reverseOnly: Boolean(PRESETS[selectedPreset].reverseOnly),
+    funMode: PRESETS[selectedPreset].funMode
   };
   if (state.settings.diagonalOnly) {
     state.settings.diagonal = true;
@@ -227,11 +239,12 @@ function captureSettings() {
 }
 
 function syncControls() {
+  refreshPresetOptions();
   elements.themeSelect.value = state.settings.theme;
   elements.sizeSelect.value = String(state.settings.size);
   elements.wordCountInput.value = String(state.settings.wordCount);
   elements.wordCountValue.textContent = String(state.settings.wordCount);
-  elements.presetSelect.value = state.settings.preset;
+  elements.presetSelect.value = sanitizeUnlockedPreset(state.settings.preset);
   elements.diagonalToggle.checked = state.settings.diagonal;
   elements.reverseToggle.checked = state.settings.reverse;
   elements.timerToggle.checked = state.settings.timer;
@@ -246,6 +259,9 @@ function startGame(seed, mode) {
   if (mode === "daily") {
     state.settings = { ...state.settings, ...DAILY_CHALLENGE_SETTINGS };
     syncControls();
+  } else if (!isPresetUnlocked(state.settings.preset)) {
+    applyPreset("balanced");
+    captureSettings();
   }
   state.seed = seed;
   normalizeDailyStreak();
@@ -466,6 +482,42 @@ function renderProgressionPanel() {
   elements.playNextTitle.textContent = recommendation.title;
   elements.playNextFocus.textContent = recommendation.focus;
   elements.playNextHint.textContent = recommendation.hint;
+  renderUnlockTrack();
+  refreshPresetOptions();
+}
+
+function renderUnlockTrack() {
+  elements.unlockTrackList.innerHTML = "";
+  SPECIAL_MODE_UNLOCKS.forEach((unlock) => {
+    const current = Math.min(unlock.current(state.stats), unlock.target);
+    const unlocked = current >= unlock.target;
+    const item = document.createElement("li");
+    item.className = `unlock-track-item${unlocked ? " unlocked" : ""}`;
+    item.innerHTML = `<span class="unlock-track-icon" aria-hidden="true">${unlock.icon}</span><span class="unlock-track-copy"><span class="unlock-track-title">${unlock.label}</span><span class="unlock-track-meta">${unlocked ? "Unlocked" : unlock.hint}</span></span><span class="unlock-track-progress">${current} / ${unlock.target}</span>`;
+    elements.unlockTrackList.append(item);
+  });
+}
+
+function refreshPresetOptions() {
+  Array.from(elements.presetSelect.options).forEach((option) => {
+    const presetKey = option.value;
+    const unlocked = isPresetUnlocked(presetKey);
+    option.disabled = !unlocked;
+    option.textContent = unlocked ? PRESETS[presetKey].label : `${PRESETS[presetKey].label} (Locked)`;
+  });
+}
+
+function isPresetUnlocked(presetKey) {
+  const unlock = SPECIAL_MODE_UNLOCKS.find((item) => item.id === presetKey);
+  if (!unlock) {
+    return true;
+  }
+  return unlock.current(state.stats) >= unlock.target;
+}
+
+function sanitizeUnlockedPreset(presetKey) {
+  const safePreset = sanitizePreset(presetKey);
+  return isPresetUnlocked(safePreset) ? safePreset : "balanced";
 }
 
 function getNextUnlock() {
