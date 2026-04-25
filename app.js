@@ -13,6 +13,7 @@ const PRESETS = {
   relaxed: { label: "Relaxed", size: 8, wordCount: 6, diagonal: false, reverse: false, timer: false, hints: true, mystery: false, funMode: "Sunday stroll" },
   balanced: { label: "Balanced", size: 12, wordCount: 8, diagonal: true, reverse: true, timer: true, hints: true, mystery: false, funMode: "Daily spark" },
   sprint: { label: "Sprint", size: 10, wordCount: 7, diagonal: true, reverse: false, timer: true, hints: true, mystery: false, funMode: "Quick streak" },
+  reverseRush: { label: "Reverse Rush", size: 10, wordCount: 8, diagonal: true, reverse: true, reverseOnly: true, timer: true, hints: false, mystery: false, funMode: "Reverse rush" },
   veteran: { label: "Veteran", size: 15, wordCount: 12, diagonal: true, reverse: true, timer: true, hints: false, mystery: false, funMode: "Dense overlap" }
 };
 
@@ -189,7 +190,13 @@ function bindEvents() {
 
 function applyPreset(presetKey) {
   const preset = PRESETS[sanitizePreset(presetKey)];
-  state.settings = { ...state.settings, ...preset, preset: presetKey };
+  state.settings = {
+    ...state.settings,
+    mystery: false,
+    reverseOnly: false,
+    ...preset,
+    preset: presetKey
+  };
   syncControls();
 }
 
@@ -205,8 +212,12 @@ function captureSettings() {
     timer: elements.timerToggle.checked,
     hints: elements.hintsToggle.checked,
     mystery: elements.mysteryToggle.checked,
+    reverseOnly: Boolean(PRESETS[sanitizePreset(elements.presetSelect.value)].reverseOnly),
     funMode: PRESETS[sanitizePreset(elements.presetSelect.value)].funMode
   };
+  if (state.settings.reverseOnly) {
+    state.settings.reverse = true;
+  }
 }
 
 function syncControls() {
@@ -220,6 +231,7 @@ function syncControls() {
   elements.timerToggle.checked = state.settings.timer;
   elements.hintsToggle.checked = state.settings.hints;
   elements.mysteryToggle.checked = Boolean(state.settings.mystery);
+  updatePresetSpecificLocks();
 }
 
 function startGame(seed, mode) {
@@ -265,12 +277,12 @@ function startGame(seed, mode) {
     : `Your custom board is ready. Find ${state.words.length} words.`);
 }
 
-function generatePuzzle({ seed, size, wordCount, theme, diagonal, reverse }) {
+function generatePuzzle({ seed, size, wordCount, theme, diagonal, reverse, reverseOnly }) {
   const rng = createRng(seed);
   const board = Array.from({ length: size }, () => Array.from({ length: size }, () => ""));
   const themeWords = shuffle([...THEMES[theme]], rng).filter((word) => word.length <= size).slice(0, Math.min(wordCount, THEMES[theme].length));
   const placements = new Map();
-  const directions = getDirections(diagonal, reverse);
+  const directions = getDirections(diagonal, reverse, reverseOnly);
 
   themeWords.forEach((word) => {
     const placed = placeWord(board, word, directions, rng);
@@ -284,10 +296,13 @@ function generatePuzzle({ seed, size, wordCount, theme, diagonal, reverse }) {
   return { board, words, placements };
 }
 
-function getDirections(diagonal, reverse) {
+function getDirections(diagonal, reverse, reverseOnly = false) {
   const base = [[0, 1], [1, 0]];
   if (diagonal) {
     base.push([1, 1], [1, -1]);
+  }
+  if (reverseOnly) {
+    return base.map(([row, col]) => [-row, -col]);
   }
   return reverse ? [...base, ...base.map(([row, col]) => [-row, -col])] : base;
 }
@@ -515,13 +530,13 @@ function getRecommendedChallenge() {
   }
   return {
     mode: "custom",
-    preset: "balanced",
+    preset: "reverseRush",
     theme: "world",
-    title: "Mystery challenge",
+    title: "Reverse Rush",
     focus: "Mastery loop",
-    hint: "Mix in a custom run and keep sharpening your times and discovery skills.",
+    hint: "Push into a reverse-only hunt when you want a sharper veteran-style challenge.",
     modeLabel: "Custom",
-    presetLabel: PRESETS.balanced.label
+    presetLabel: PRESETS.reverseRush.label
   };
 }
 
@@ -549,7 +564,9 @@ function playRecommendedChallenge() {
 function updateSummaryLabels() {
   elements.activePresetLabel.textContent = PRESETS[state.settings.preset].label;
   elements.activeThemeLabel.textContent = capitalize(state.settings.theme);
-  elements.activeRulesLabel.textContent = `${state.settings.diagonal ? "Diagonal" : "Straight"} • ${state.settings.reverse ? "Reverse" : "Forward"}`;
+  elements.activeRulesLabel.textContent = state.settings.reverseOnly
+    ? "Diagonal • Reverse only"
+    : `${state.settings.diagonal ? "Diagonal" : "Straight"} • ${state.settings.reverse ? "Reverse" : "Forward"}`;
   elements.funModeLabel.textContent = state.settings.mystery ? `${state.settings.funMode} • Mystery` : state.settings.funMode;
 }
 
@@ -566,6 +583,9 @@ function updateModeMessaging() {
     : "Build your own board, then drag across letters or use click/tap start → finish to solve it.";
   if (state.settings.mystery) {
     elements.boardHelper.textContent += " Mystery mode hides the full word list until you reveal each word.";
+  }
+  if (state.settings.reverseOnly) {
+    elements.boardHelper.textContent += " Reverse Rush places every target backwards for a more veteran-friendly hunt.";
   }
   elements.modeDescription.textContent = isDaily
     ? "Everyone gets the same daily word search seed, so you can compare runs and share the challenge."
@@ -831,6 +851,7 @@ function readConfigFromUrl() {
       timer: parseBoolean(params.get("timer"), PRESETS[preset].timer),
       hints: parseBoolean(params.get("hints"), PRESETS[preset].hints),
       mystery: parseBoolean(params.get("mystery"), false),
+      reverseOnly: Boolean(PRESETS[preset].reverseOnly),
       funMode: PRESETS[preset].funMode
     }
   };
@@ -943,6 +964,17 @@ function toggleDailyControls(isDaily) {
     control.disabled = isDaily;
     control.setAttribute("aria-disabled", String(isDaily));
   });
+  updatePresetSpecificLocks();
+}
+
+function updatePresetSpecificLocks() {
+  const reverseLocked = Boolean(state.settings.reverseOnly);
+  const dailyLocked = state.mode === "daily";
+  elements.reverseToggle.disabled = dailyLocked || reverseLocked;
+  elements.reverseToggle.setAttribute("aria-disabled", String(elements.reverseToggle.disabled));
+  if (reverseLocked) {
+    elements.reverseToggle.checked = true;
+  }
 }
 
 function isCanonicalDailySetup() {
