@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Word Search Quest social preview">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#111831" />
+      <stop offset="100%" stop-color="#0b1020" />
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#76e4f7" />
+      <stop offset="100%" stop-color="#6c8cff" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <circle cx="150" cy="100" r="180" fill="#76e4f7" opacity="0.08" />
+  <circle cx="1080" cy="540" r="220" fill="#6c8cff" opacity="0.12" />
+  <g transform="translate(78 86)">
+    <text x="0" y="46" fill="#76e4f7" font-size="26" font-family="Inter, Arial, sans-serif" font-weight="700" letter-spacing="4">FREE ONLINE WORD SEARCH</text>
+    <text x="0" y="138" fill="#eff4ff" font-size="74" font-family="Inter, Arial, sans-serif" font-weight="800">Word Search Quest</text>
+    <text x="0" y="200" fill="#aab6d8" font-size="30" font-family="Inter, Arial, sans-serif">Daily word search puzzles, custom boards, and shareable browser challenges.</text>
+  </g>
+  <g transform="translate(720 120)">
+    <rect width="360" height="360" rx="42" fill="url(#card)" opacity="0.2" />
+    <rect x="28" y="28" width="304" height="304" rx="36" fill="#18264a" stroke="#eff4ff" stroke-opacity="0.2" />
+    <g fill="#eff4ff" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800">
+      <text x="64" y="96">W</text><text x="122" y="96">O</text><text x="180" y="96">R</text><text x="238" y="96">D</text>
+      <text x="64" y="154">Q</text><text x="122" y="154">U</text><text x="180" y="154">E</text><text x="238" y="154">S</text>
+      <text x="64" y="212">S</text><text x="122" y="212">E</text><text x="180" y="212">A</text><text x="238" y="212">R</text>
+      <text x="64" y="270">C</text><text x="122" y="270">H</text><text x="180" y="270">G</text><text x="238" y="270">A</text>
+    </g>
+    <path d="M62 86l32 32 102-102" fill="none" stroke="#5df2b0" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+  <g transform="translate(78 320)">
+    <rect width="228" height="62" rx="31" fill="#76e4f7" />
+    <text x="30" y="41" fill="#08101d" font-size="28" font-family="Inter, Arial, sans-serif" font-weight="800">Daily + Custom</text>
+    <rect x="248" width="250" height="62" rx="31" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-opacity="0.14" />
+    <text x="278" y="41" fill="#eff4ff" font-size="28" font-family="Inter, Arial, sans-serif" font-weight="700">Keyboard Friendly</text>
+  </g>
+</svg>

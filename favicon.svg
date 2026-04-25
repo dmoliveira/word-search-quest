@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Word Search Quest icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#76e4f7" />
+      <stop offset="100%" stop-color="#6c8cff" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#0b1020" />
+  <rect x="12" y="12" width="104" height="104" rx="24" fill="url(#bg)" opacity="0.18" />
+  <g fill="none" stroke="#eff4ff" stroke-width="6">
+    <rect x="24" y="24" width="80" height="80" rx="16" />
+    <path d="M50 40h28M50 64h28M50 88h14" stroke-linecap="round" />
+    <path d="M40 40l12 12 36-36" stroke="#5df2b0" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+</svg>
