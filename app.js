@@ -68,6 +68,9 @@ const elements = {
   wordList: document.querySelector("#wordList"),
   remainingWords: document.querySelector("#remainingWords"),
   statusMessage: document.querySelector("#statusMessage"),
+  selectionTray: document.querySelector("#selectionTray"),
+  selectionTrayLabel: document.querySelector("#selectionTrayLabel"),
+  clearSelectionButton: document.querySelector("#clearSelectionButton"),
   currentTargetBar: document.querySelector("#currentTargetBar"),
   currentTargetWord: document.querySelector("#currentTargetWord"),
   currentTargetCount: document.querySelector("#currentTargetCount"),
@@ -217,6 +220,10 @@ function bindEvents() {
   elements.hintButton.addEventListener("click", revealHint);
   elements.resetProgress.addEventListener("click", () => startGame(state.seed, state.mode));
   elements.dismissCoach.addEventListener("click", dismissCoachStrip);
+  elements.clearSelectionButton.addEventListener("click", () => {
+    clearSelection();
+    setStatus("Selection cleared.");
+  });
   elements.wordCountInput.addEventListener("input", () => {
     elements.wordCountValue.textContent = elements.wordCountInput.value;
     refreshSetupSnapshot();
@@ -543,6 +550,7 @@ function startGame(seed, mode) {
   updateModeMessaging();
   renderBoard();
   updateProgress();
+  updateSelectionTray();
   updateCurrentTarget();
   updateCoachStrip();
   updateUrl();
@@ -714,6 +722,16 @@ function updateCurrentTarget() {
   elements.currentTargetCount.textContent = `${remaining} left`;
 }
 
+function updateSelectionTray() {
+  if (!state.anchorCell) {
+    elements.selectionTray.hidden = true;
+    return;
+  }
+
+  elements.selectionTray.hidden = false;
+  elements.selectionTrayLabel.textContent = `Row ${state.anchorCell.row + 1} • Col ${state.anchorCell.col + 1}`;
+}
+
 function renderAchievements() {
   elements.achievementList.innerHTML = "";
   ACHIEVEMENTS.forEach((achievement) => {
@@ -737,6 +755,7 @@ function updateProgress() {
   renderProgressionPanel();
   renderWordList();
   updateCurrentTarget();
+  updateSelectionTray();
   updateCoachStrip();
 }
 
@@ -1098,6 +1117,7 @@ function beginSelection(cell) {
   state.anchorCell = cell;
   state.previewCells = [cell];
   state.hintCells = [];
+  updateSelectionTray();
   renderBoard();
 }
 
@@ -1136,6 +1156,7 @@ function finalizeSelection(cell) {
 function clearSelection(clearAnchor = true) {
   state.previewCells = [];
   if (clearAnchor) state.anchorCell = null;
+  updateSelectionTray();
   renderBoard();
 }
 
