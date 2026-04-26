@@ -61,6 +61,9 @@ const elements = {
   wordList: document.querySelector("#wordList"),
   remainingWords: document.querySelector("#remainingWords"),
   statusMessage: document.querySelector("#statusMessage"),
+  currentTargetBar: document.querySelector("#currentTargetBar"),
+  currentTargetWord: document.querySelector("#currentTargetWord"),
+  currentTargetCount: document.querySelector("#currentTargetCount"),
   foundCount: document.querySelector("#foundCount"),
   timerValue: document.querySelector("#timerValue"),
   statusNote: document.querySelector("#statusNote"),
@@ -491,6 +494,7 @@ function startGame(seed, mode) {
   updateModeMessaging();
   renderBoard();
   updateProgress();
+  updateCurrentTarget();
   updateCoachStrip();
   updateUrl();
   setStatus(mode === "daily"
@@ -645,6 +649,22 @@ function renderWordList() {
   elements.remainingWords.textContent = state.settings.mystery ? `${remaining} hidden` : `${remaining} left`;
 }
 
+function updateCurrentTarget() {
+  const nextWord = state.words.find((word) => !state.foundWords.has(word));
+  const remaining = Math.max(0, state.words.length - state.foundWords.size);
+
+  if (!nextWord) {
+    elements.currentTargetWord.textContent = "Board cleared";
+    elements.currentTargetCount.textContent = "0 left";
+    return;
+  }
+
+  elements.currentTargetWord.textContent = state.settings.mystery
+    ? `Hidden word ${state.words.indexOf(nextWord) + 1}`
+    : nextWord;
+  elements.currentTargetCount.textContent = `${remaining} left`;
+}
+
 function renderAchievements() {
   elements.achievementList.innerHTML = "";
   ACHIEVEMENTS.forEach((achievement) => {
@@ -667,6 +687,7 @@ function updateProgress() {
   elements.bestTimeValue.textContent = formatBestTime(state.stats.bestTimeSeconds);
   renderProgressionPanel();
   renderWordList();
+  updateCurrentTarget();
   updateCoachStrip();
 }
 

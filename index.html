@@ -347,6 +347,13 @@
               <button type="button" id="dismissCoach" class="coach-dismiss">Got it</button>
             </div>
             <p id="statusMessage" class="status-message board-status" aria-live="polite">Generate a board to begin your hunt.</p>
+            <div id="currentTargetBar" class="current-target-bar" aria-live="polite">
+              <div class="current-target-copy">
+                <span class="current-target-label">Current target</span>
+                <strong id="currentTargetWord">-</strong>
+              </div>
+              <span id="currentTargetCount" class="current-target-count">0 left</span>
+            </div>
             <div id="board" class="board" role="grid" aria-label="Word search board"></div>
           </section>
 
