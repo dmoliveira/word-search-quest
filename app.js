@@ -86,6 +86,10 @@ const elements = {
   nextUnlockTitle: document.querySelector("#nextUnlockTitle"),
   nextUnlockProgress: document.querySelector("#nextUnlockProgress"),
   nextUnlockHint: document.querySelector("#nextUnlockHint"),
+  snapshotDifficulty: document.querySelector("#snapshotDifficulty"),
+  snapshotPace: document.querySelector("#snapshotPace"),
+  snapshotLoadout: document.querySelector("#snapshotLoadout"),
+  snapshotHint: document.querySelector("#snapshotHint"),
   playNextMeta: document.querySelector("#playNextMeta"),
   playNextTitle: document.querySelector("#playNextTitle"),
   playNextFocus: document.querySelector("#playNextFocus"),
@@ -195,12 +199,24 @@ function bindEvents() {
   elements.dismissCoach.addEventListener("click", dismissCoachStrip);
   elements.wordCountInput.addEventListener("input", () => {
     elements.wordCountValue.textContent = elements.wordCountInput.value;
+    refreshSetupSnapshot();
   });
   elements.themeSelect.addEventListener("change", () => {
     refreshThemeHelp(elements.themeSelect.value);
+    refreshSetupSnapshot();
   });
   elements.presetSelect.addEventListener("change", () => {
     applyPreset(elements.presetSelect.value);
+  });
+  [
+    elements.sizeSelect,
+    elements.diagonalToggle,
+    elements.reverseToggle,
+    elements.timerToggle,
+    elements.hintsToggle,
+    elements.mysteryToggle
+  ].forEach((control) => {
+    control.addEventListener("change", refreshSetupSnapshot);
   });
   elements.playAgainButton.addEventListener("click", () => {
     elements.winDialog.close();
@@ -267,6 +283,152 @@ function syncControls() {
   elements.mysteryToggle.checked = Boolean(state.settings.mystery);
   updatePresetSpecificLocks();
   refreshThemeHelp();
+  refreshSetupSnapshot();
+}
+
+function getPreviewSettings() {
+  if (state.mode === "daily") {
+    return {
+      ...state.settings,
+      ...DAILY_CHALLENGE_SETTINGS,
+      diagonalOnly: false,
+      reverseOnly: false,
+      funMode: PRESETS[DAILY_CHALLENGE_SETTINGS.preset].funMode
+    };
+  }
+
+  const presetKey = sanitizeUnlockedPreset(elements.presetSelect.value || state.settings.preset);
+  const preset = PRESETS[presetKey];
+  const preview = {
+    ...state.settings,
+    theme: sanitizeTheme(elements.themeSelect.value),
+    size: sanitizeSize(elements.sizeSelect.value, state.settings.size),
+    wordCount: sanitizeWordCount(elements.wordCountInput.value, state.settings.wordCount),
+    preset: presetKey,
+    diagonal: elements.diagonalToggle.checked,
+    reverse: elements.reverseToggle.checked,
+    timer: elements.timerToggle.checked,
+    hints: elements.hintsToggle.checked,
+    mystery: elements.mysteryToggle.checked,
+    diagonalOnly: Boolean(preset.diagonalOnly),
+    reverseOnly: Boolean(preset.reverseOnly),
+    funMode: preset.funMode
+  };
+
+  if (preview.diagonalOnly) {
+    preview.diagonal = true;
+  }
+  if (preview.reverseOnly) {
+    preview.reverse = true;
+  }
+
+  return preview;
+}
+
+function refreshSetupSnapshot() {
+  const preview = getPreviewSettings();
+  const difficulty = state.mode === "daily" ? PRESETS[DAILY_CHALLENGE_SETTINGS.preset].label : getSnapshotDifficulty(preview);
+  const pace = getSnapshotPace(preview);
+  const modeLabels = [];
+
+  if (preview.mystery) {
+    modeLabels.push("Mystery");
+  }
+  if (preview.reverseOnly) {
+    modeLabels.push("Reverse Rush");
+  }
+  if (preview.diagonalOnly) {
+    modeLabels.push("Diagonal Dash");
+  }
+  if (preview.preset === "sprint") {
+    modeLabels.push("Sprint");
+  }
+
+  const loadout = [`${preview.size}x${preview.size}`, `${preview.wordCount} words`, ...modeLabels];
+  elements.snapshotDifficulty.textContent = difficulty;
+  elements.snapshotPace.textContent = pace;
+  elements.snapshotLoadout.textContent = loadout.join(" • ");
+  elements.snapshotHint.textContent = buildSnapshotHint(preview, difficulty, pace);
+}
+
+function buildSnapshotHint(preview, difficulty, pace) {
+  if (state.mode === "daily") {
+    return "Today's shared board locks in the balanced daily setup, so everyone gets the same steady challenge.";
+  }
+  if (difficulty === "Balanced" && pace === "Steady" && !preview.mystery && !preview.diagonalOnly && !preview.reverseOnly) {
+    return "A balanced board with enough overlap to stay interesting without feeling punishing.";
+  }
+
+  const intensity = difficulty === "Relaxed"
+    ? "keeps things light"
+    : difficulty === "Balanced"
+      ? "stays approachable"
+      : difficulty === "Challenging"
+        ? "leans into trickier overlap"
+        : "pushes into veteran territory";
+  const flow = pace === "Relaxed"
+    ? "with a slower, low-pressure rhythm"
+    : pace === "Steady"
+      ? "with a measured solving rhythm"
+      : pace === "Quick"
+        ? "with quicker reads and faster scans"
+        : "with tight reads that reward sharp scanning";
+  const twist = preview.mystery
+    ? " Mystery mode hides the full list until you uncover each word."
+    : preview.reverseOnly
+      ? " Reverse Rush turns every target backward."
+      : preview.diagonalOnly
+        ? " Diagonal Dash keeps every word on slanted lines."
+        : !preview.hints
+          ? " Hints stay off, so every find is earned."
+          : "";
+
+  return `This ${difficulty.toLowerCase()} board ${intensity} ${flow}.${twist}`;
+}
+
+function getSnapshotDifficulty(preview) {
+  let score = 0;
+  score += preview.size >= 15 ? 3 : preview.size >= 12 ? 2 : preview.size >= 10 ? 1 : 0;
+  score += preview.wordCount >= 12 ? 3 : preview.wordCount >= 9 ? 2 : preview.wordCount >= 7 ? 1 : 0;
+  score += preview.diagonal ? 1 : 0;
+  score += preview.reverse ? 1 : 0;
+  score += preview.timer ? 1 : 0;
+  score += preview.hints ? 0 : 2;
+  score += preview.mystery ? 2 : 0;
+  score += preview.diagonalOnly ? 2 : 0;
+  score += preview.reverseOnly ? 2 : 0;
+
+  if (score <= 2) {
+    return "Relaxed";
+  }
+  if (score <= 6) {
+    return "Balanced";
+  }
+  if (score <= 10) {
+    return "Challenging";
+  }
+  return "Veteran";
+}
+
+function getSnapshotPace(preview) {
+  let score = 0;
+  score += preview.timer ? 2 : -1;
+  score += preview.size >= 15 ? 2 : preview.size >= 12 ? 1 : 0;
+  score += preview.wordCount >= 10 ? 2 : preview.wordCount >= 8 ? 1 : 0;
+  score += preview.diagonalOnly || preview.reverseOnly ? 2 : 0;
+  score += preview.mystery ? 1 : 0;
+  score += preview.hints ? 0 : 1;
+
+  if (score <= 0) {
+    return "Relaxed";
+  }
+  if (score <= 3) {
+    return "Steady";
+  }
+  if (score <= 6) {
+    return "Quick";
+  }
+  return "Sharp";
 }
 
 function startGame(seed, mode) {
