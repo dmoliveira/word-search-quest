@@ -294,6 +294,28 @@ input[type="range"] {
   padding-inline: 1rem;
 }
 
+.setup-snapshot {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1.1rem;
+}
+
+.compact-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.compact-header h3 {
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.snapshot-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .challenge-strip {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   padding: 0.8rem;

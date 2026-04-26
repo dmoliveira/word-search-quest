@@ -147,6 +147,24 @@
               </label>
             </form>
 
+            <section class="setup-snapshot" aria-live="polite">
+              <div class="compact-header">
+                <h3>Challenge snapshot</h3>
+                <span id="snapshotDifficulty" class="pill">Balanced</span>
+              </div>
+              <div class="next-unlock-card snapshot-grid">
+                <div>
+                  <span class="stat-label">Pace</span>
+                  <strong id="snapshotPace">Steady</strong>
+                </div>
+                <div>
+                  <span class="stat-label">Loadout</span>
+                  <strong id="snapshotLoadout">12x12 • 8 words</strong>
+                </div>
+              </div>
+              <p id="snapshotHint" class="status-note">A balanced board with enough overlap to stay interesting without feeling punishing.</p>
+            </section>
+
             <div class="action-row">
               <button type="button" id="applySettings" class="btn btn-primary">Regenerate</button>
               <button type="button" id="shareChallenge" class="btn btn-secondary">Share</button>
