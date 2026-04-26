@@ -120,6 +120,28 @@
                 <input name="wordCount" id="wordCountInput" type="range" min="5" max="14" value="8" />
                 <span id="wordCountValue" class="value-tag">8</span>
               </label>
+              <div id="quickPresetRail" class="quick-preset-rail" aria-label="Quick difficulty presets">
+                <button type="button" class="quick-preset-card" data-preset="relaxed" aria-pressed="false">
+                  <span class="quick-preset-name">Relaxed</span>
+                  <span class="quick-preset-meta">Calm</span>
+                  <span class="quick-preset-badge" hidden></span>
+                </button>
+                <button type="button" class="quick-preset-card" data-preset="balanced" aria-pressed="false">
+                  <span class="quick-preset-name">Balanced</span>
+                  <span class="quick-preset-meta">Standard</span>
+                  <span class="quick-preset-badge" hidden></span>
+                </button>
+                <button type="button" class="quick-preset-card" data-preset="sprint" aria-pressed="false">
+                  <span class="quick-preset-name">Sprint</span>
+                  <span class="quick-preset-meta">Fast</span>
+                  <span class="quick-preset-badge" hidden></span>
+                </button>
+                <button type="button" class="quick-preset-card" data-preset="veteran" aria-pressed="false">
+                  <span class="quick-preset-name">Veteran</span>
+                  <span class="quick-preset-meta">Hard</span>
+                  <span class="quick-preset-badge" hidden></span>
+                </button>
+              </div>
               <label>
                 <span id="presetLabelText">Daily preset</span>
                 <select name="preset" id="presetSelect"></select>
