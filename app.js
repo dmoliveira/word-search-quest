@@ -56,6 +56,13 @@ const MODE_GALLERY_ITEMS = [
   { id: "veteran", icon: "🏆", trait: "Dense" }
 ];
 
+const QUICK_PRESET_ITEMS = [
+  { id: "relaxed", trait: "Calm" },
+  { id: "balanced", trait: "Standard" },
+  { id: "sprint", trait: "Fast" },
+  { id: "veteran", trait: "Hard" }
+];
+
 const elements = {
   board: document.querySelector("#board"),
   wordList: document.querySelector("#wordList"),
@@ -75,6 +82,7 @@ const elements = {
   setupHeading: document.querySelector("#setupHeading"),
   presetLabelText: document.querySelector("#presetLabelText"),
   presetHelp: document.querySelector("#presetHelp"),
+  quickPresetButtons: Array.from(document.querySelectorAll(".quick-preset-card")),
   modeGallery: document.querySelector("#modeGallery"),
   modeDescription: document.querySelector("#modeDescription"),
   boardTitle: document.querySelector("#boardTitle"),
@@ -220,6 +228,16 @@ function bindEvents() {
   elements.presetSelect.addEventListener("change", () => {
     applyPreset(elements.presetSelect.value);
   });
+  elements.quickPresetButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const presetKey = sanitizePreset(button.dataset.preset);
+      if (state.mode === "daily" || !isPresetUnlocked(presetKey)) {
+        renderQuickPresetRail();
+        return;
+      }
+      applyPreset(presetKey);
+    });
+  });
   elements.modeGalleryButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const presetKey = sanitizePreset(button.dataset.preset);
@@ -293,6 +311,7 @@ function captureSettings() {
 function syncControls() {
   refreshPresetOptions();
   refreshPresetHelp();
+  renderQuickPresetRail();
   renderModeGallery();
   elements.themeSelect.value = state.settings.theme;
   elements.sizeSelect.value = String(state.settings.size);
@@ -307,6 +326,36 @@ function syncControls() {
   updatePresetSpecificLocks();
   refreshThemeHelp();
   refreshSetupSnapshot();
+}
+
+function renderQuickPresetRail() {
+  elements.quickPresetButtons.forEach((button) => {
+    const presetKey = sanitizePreset(button.dataset.preset);
+    const unlock = SPECIAL_MODE_UNLOCKS.find((item) => item.id === presetKey);
+    const active = state.settings.preset === presetKey;
+    const unlocked = state.mode !== "daily" && isPresetUnlocked(presetKey);
+    const badge = button.querySelector(".quick-preset-badge");
+
+    button.classList.toggle("active", active);
+    button.classList.toggle("locked", !unlocked && state.mode !== "daily");
+    button.disabled = state.mode === "daily";
+    button.setAttribute("aria-pressed", String(active));
+
+    if (state.mode === "daily") {
+      badge.hidden = presetKey !== DAILY_CHALLENGE_SETTINGS.preset;
+      if (presetKey === DAILY_CHALLENGE_SETTINGS.preset) {
+        badge.textContent = "Daily";
+      }
+      return;
+    }
+
+    if (unlock && !unlocked) {
+      badge.hidden = false;
+      badge.textContent = `${Math.min(unlock.current(state.stats), unlock.target)}/${unlock.target}`;
+    } else {
+      badge.hidden = true;
+    }
+  });
 }
 
 function getPreviewSettings() {
