@@ -125,6 +125,7 @@ const elements = {
   playDaily: document.querySelector("#playDaily"),
   playCustom: document.querySelector("#playCustom"),
   applySettings: document.querySelector("#applySettings"),
+  surpriseButton: document.querySelector("#surpriseButton"),
   shareChallenge: document.querySelector("#shareChallenge"),
   hintButton: document.querySelector("#hintButton"),
   resetProgress: document.querySelector("#resetProgress"),
@@ -216,6 +217,7 @@ function bindEvents() {
     captureSettings();
     startGame(state.mode === "daily" ? createDailySeed() : randomSeed(), state.mode);
   });
+  elements.surpriseButton.addEventListener("click", randomizeCustomSetup);
   elements.shareChallenge.addEventListener("click", shareChallenge);
   elements.hintButton.addEventListener("click", revealHint);
   elements.resetProgress.addEventListener("click", () => startGame(state.seed, state.mode));
@@ -333,6 +335,38 @@ function syncControls() {
   updatePresetSpecificLocks();
   refreshThemeHelp();
   refreshSetupSnapshot();
+}
+
+function randomizeCustomSetup() {
+  const unlockedPresets = Object.keys(PRESETS).filter(isPresetUnlocked);
+  const presetKey = unlockedPresets[randomInt(Math.random, 0, unlockedPresets.length - 1)] || "balanced";
+  const themeKey = Object.keys(THEMES)[randomInt(Math.random, 0, Object.keys(THEMES).length - 1)] || "tech";
+  const size = [8, 10, 12, 15][randomInt(Math.random, 0, 3)];
+  const preset = PRESETS[presetKey];
+  const mysteryAllowed = !preset.reverseOnly && !preset.diagonalOnly;
+
+  state.mode = "custom";
+  state.settings = {
+    ...state.settings,
+    ...preset,
+    preset: presetKey,
+    theme: themeKey,
+    size,
+    wordCount: randomInt(Math.random, 5, Math.min(14, size)),
+    mystery: mysteryAllowed ? Math.random() >= 0.5 : false,
+    diagonalOnly: Boolean(preset.diagonalOnly),
+    reverseOnly: Boolean(preset.reverseOnly),
+    funMode: preset.funMode
+  };
+  if (state.settings.diagonalOnly) {
+    state.settings.diagonal = true;
+  }
+  if (state.settings.reverseOnly) {
+    state.settings.reverse = true;
+  }
+  syncControls();
+  startGame(randomSeed(), "custom");
+  setStatus(`Surprise setup ready: ${preset.label} with the ${capitalize(themeKey)} pack.`);
 }
 
 function renderQuickPresetRail() {
