@@ -619,6 +619,12 @@ input[type="range"] {
   border-style: dashed;
 }
 
+.word-list li.targeted {
+  border-color: rgba(118, 228, 247, 0.5);
+  background: linear-gradient(135deg, rgba(118, 228, 247, 0.18), rgba(108, 140, 255, 0.1));
+  box-shadow: 0 0 0 1px rgba(118, 228, 247, 0.12);
+}
+
 .word-list li.mystery::before {
   content: "? ";
   color: var(--warn);

@@ -152,6 +152,7 @@ const state = {
   placements: new Map(),
   foundWords: new Set(),
   foundCells: new Set(),
+  selectedTargetWord: null,
   previewCells: [],
   hintCells: [],
   anchorCell: null,
@@ -589,6 +590,7 @@ function startGame(seed, mode) {
   state.placements = puzzle.placements;
   state.foundWords = new Set();
   state.foundCells = new Set();
+  state.selectedTargetWord = null;
   state.previewCells = [];
   state.hintCells = [];
   state.anchorCell = null;
@@ -756,20 +758,57 @@ function refreshBoardState() {
 
 function renderWordList() {
   elements.wordList.innerHTML = "";
+  const activeTargetWord = getActiveTargetWord();
   state.words.forEach((word) => {
     const item = document.createElement("li");
     const found = state.foundWords.has(word);
-    item.textContent = state.settings.mystery && !found ? `Hidden word ${state.words.indexOf(word) + 1}` : word;
+    item.textContent = getWordListLabel(word);
     if (found) item.classList.add("found");
     if (!found && state.settings.mystery) item.classList.add("mystery");
+    if (!found) {
+      const setTargetWord = () => {
+        state.selectedTargetWord = word;
+        updateProgress();
+        setStatus(`Target set to ${getWordListLabel(word)}.`);
+      };
+      item.tabIndex = 0;
+      item.setAttribute("role", "button");
+      item.setAttribute("aria-pressed", String(activeTargetWord === word));
+      item.classList.toggle("targeted", activeTargetWord === word);
+      item.addEventListener("click", setTargetWord);
+      item.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") {
+          return;
+        }
+        event.preventDefault();
+        setTargetWord();
+      });
+    }
     elements.wordList.append(item);
   });
   const remaining = state.words.length - state.foundWords.size;
   elements.remainingWords.textContent = state.settings.mystery ? `${remaining} hidden` : `${remaining} left`;
 }
 
+function getWordListLabel(word) {
+  if (!state.settings.mystery || state.foundWords.has(word)) {
+    return word;
+  }
+  return `Hidden word ${state.words.indexOf(word) + 1}`;
+}
+
+function getActiveTargetWord() {
+  if (state.selectedTargetWord && !state.foundWords.has(state.selectedTargetWord)) {
+    return state.selectedTargetWord;
+  }
+
+  const nextWord = state.words.find((word) => !state.foundWords.has(word)) || null;
+  state.selectedTargetWord = nextWord;
+  return nextWord;
+}
+
 function updateCurrentTarget() {
-  const nextWord = state.words.find((word) => !state.foundWords.has(word));
+  const nextWord = getActiveTargetWord();
   const remaining = Math.max(0, state.words.length - state.foundWords.size);
 
   if (!nextWord) {
@@ -779,7 +818,7 @@ function updateCurrentTarget() {
   }
 
   elements.currentTargetWord.textContent = state.settings.mystery
-    ? `Hidden word ${state.words.indexOf(nextWord) + 1}`
+    ? getWordListLabel(nextWord)
     : nextWord;
   elements.currentTargetCount.textContent = `${remaining} left`;
 }
