@@ -484,6 +484,10 @@ input[type="range"] {
   font-size: 0.95rem;
 }
 
+.preset-help {
+  margin-top: -0.15rem;
+}
+
 .progression-panel {
   background: linear-gradient(135deg, rgba(108, 140, 255, 0.12), rgba(118, 228, 247, 0.08));
 }
