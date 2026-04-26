@@ -109,6 +109,7 @@ const elements = {
   nextUnlockProgress: document.querySelector("#nextUnlockProgress"),
   nextUnlockHint: document.querySelector("#nextUnlockHint"),
   snapshotDifficulty: document.querySelector("#snapshotDifficulty"),
+  snapshotPending: document.querySelector("#snapshotPending"),
   snapshotPace: document.querySelector("#snapshotPace"),
   snapshotLoadout: document.querySelector("#snapshotLoadout"),
   snapshotHint: document.querySelector("#snapshotHint"),
@@ -165,6 +166,7 @@ const state = {
   startTime: Date.now(),
   timerInterval: null,
   coachDismissed: loadCoachDismissed(),
+  generatedSettingsKey: "",
   stats: loadStats()
 };
 
@@ -462,6 +464,30 @@ function refreshSetupSnapshot() {
   elements.snapshotPace.textContent = pace;
   elements.snapshotLoadout.textContent = loadout.join(" • ");
   elements.snapshotHint.textContent = buildSnapshotHint(preview, difficulty, pace);
+  updatePendingState(preview);
+}
+
+function updatePendingState(preview = getPreviewSettings()) {
+  const isPending = buildSettingsKey(preview) !== state.generatedSettingsKey;
+  elements.snapshotPending.hidden = !isPending;
+  elements.applySettings.classList.toggle("is-pending", isPending);
+  elements.applySettings.textContent = isPending ? "Apply changes" : "Regenerate";
+}
+
+function buildSettingsKey(settings) {
+  return JSON.stringify({
+    theme: settings.theme,
+    size: settings.size,
+    wordCount: settings.wordCount,
+    preset: settings.preset,
+    diagonal: settings.diagonal,
+    reverse: settings.reverse,
+    timer: settings.timer,
+    hints: settings.hints,
+    mystery: Boolean(settings.mystery),
+    diagonalOnly: Boolean(settings.diagonalOnly),
+    reverseOnly: Boolean(settings.reverseOnly)
+  });
 }
 
 function buildSnapshotHint(preview, difficulty, pace) {
@@ -555,6 +581,7 @@ function startGame(seed, mode) {
     captureSettings();
   }
   state.seed = seed;
+  state.generatedSettingsKey = buildSettingsKey(state.settings);
   normalizeDailyStreak();
   const puzzle = generatePuzzle({ ...state.settings, seed });
   state.board = puzzle.board;
@@ -582,6 +609,7 @@ function startGame(seed, mode) {
   }
   updateSummaryLabels();
   updateModeMessaging();
+  updatePendingState();
   renderBoard();
   updateProgress();
   updateSelectionTray();
