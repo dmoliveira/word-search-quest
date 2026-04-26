@@ -125,6 +125,40 @@
                 <select name="preset" id="presetSelect"></select>
               </label>
               <p id="presetHelp" class="status-note preset-help">Special presets unlock through wins, streaks, and veteran clears.</p>
+              <div id="modeGallery" class="mode-gallery" aria-label="Special modes gallery">
+                <button type="button" class="mode-gallery-card" data-preset="sprint" aria-pressed="false">
+                  <span class="mode-gallery-icon" aria-hidden="true">⚡</span>
+                  <span>
+                    <span class="mode-gallery-name">Sprint</span>
+                    <span class="mode-gallery-meta">Fast</span>
+                  </span>
+                  <span class="mode-gallery-badge" hidden></span>
+                </button>
+                <button type="button" class="mode-gallery-card" data-preset="reverseRush" aria-pressed="false">
+                  <span class="mode-gallery-icon" aria-hidden="true">🔁</span>
+                  <span>
+                    <span class="mode-gallery-name">Reverse Rush</span>
+                    <span class="mode-gallery-meta">Reverse only</span>
+                  </span>
+                  <span class="mode-gallery-badge" hidden></span>
+                </button>
+                <button type="button" class="mode-gallery-card" data-preset="diagonalDash" aria-pressed="false">
+                  <span class="mode-gallery-icon" aria-hidden="true">⬘</span>
+                  <span>
+                    <span class="mode-gallery-name">Diagonal Dash</span>
+                    <span class="mode-gallery-meta">Diagonal only</span>
+                  </span>
+                  <span class="mode-gallery-badge" hidden></span>
+                </button>
+                <button type="button" class="mode-gallery-card" data-preset="veteran" aria-pressed="false">
+                  <span class="mode-gallery-icon" aria-hidden="true">🏆</span>
+                  <span>
+                    <span class="mode-gallery-name">Veteran</span>
+                    <span class="mode-gallery-meta">Dense</span>
+                  </span>
+                  <span class="mode-gallery-badge" hidden></span>
+                </button>
+              </div>
               <label class="checkbox-row">
                 <input type="checkbox" name="diagonal" id="diagonalToggle" checked />
                 Allow diagonals

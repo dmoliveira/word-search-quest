@@ -49,6 +49,13 @@ const SPECIAL_MODE_UNLOCKS = [
   { id: "diagonalDash", label: "Diagonal Dash", icon: "⬘", hint: "Clear 1 veteran board", current: (stats) => stats.veteranWins, target: 1 }
 ];
 
+const MODE_GALLERY_ITEMS = [
+  { id: "sprint", icon: "⚡", trait: "Fast" },
+  { id: "reverseRush", icon: "🔁", trait: "Reverse only" },
+  { id: "diagonalDash", icon: "⬘", trait: "Diagonal only" },
+  { id: "veteran", icon: "🏆", trait: "Dense" }
+];
+
 const elements = {
   board: document.querySelector("#board"),
   wordList: document.querySelector("#wordList"),
@@ -65,6 +72,7 @@ const elements = {
   setupHeading: document.querySelector("#setupHeading"),
   presetLabelText: document.querySelector("#presetLabelText"),
   presetHelp: document.querySelector("#presetHelp"),
+  modeGallery: document.querySelector("#modeGallery"),
   modeDescription: document.querySelector("#modeDescription"),
   boardTitle: document.querySelector("#boardTitle"),
   boardSectionTitle: document.querySelector("#boardSectionTitle"),
@@ -115,7 +123,8 @@ const elements = {
   reverseToggle: document.querySelector("#reverseToggle"),
   timerToggle: document.querySelector("#timerToggle"),
   hintsToggle: document.querySelector("#hintsToggle"),
-  mysteryToggle: document.querySelector("#mysteryToggle")
+  mysteryToggle: document.querySelector("#mysteryToggle"),
+  modeGalleryButtons: Array.from(document.querySelectorAll(".mode-gallery-card"))
 };
 
 const state = {
@@ -208,6 +217,16 @@ function bindEvents() {
   elements.presetSelect.addEventListener("change", () => {
     applyPreset(elements.presetSelect.value);
   });
+  elements.modeGalleryButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const presetKey = sanitizePreset(button.dataset.preset);
+      if (state.mode === "daily" || !isPresetUnlocked(presetKey)) {
+        renderModeGallery();
+        return;
+      }
+      applyPreset(presetKey);
+    });
+  });
   [
     elements.sizeSelect,
     elements.diagonalToggle,
@@ -271,6 +290,7 @@ function captureSettings() {
 function syncControls() {
   refreshPresetOptions();
   refreshPresetHelp();
+  renderModeGallery();
   elements.themeSelect.value = state.settings.theme;
   elements.sizeSelect.value = String(state.settings.size);
   elements.wordCountInput.value = String(state.settings.wordCount);
@@ -676,6 +696,52 @@ function renderProgressionPanel() {
   renderUnlockTrack();
   refreshPresetOptions();
   refreshPresetHelp();
+  renderModeGallery();
+}
+
+function renderModeGallery() {
+  elements.modeGalleryButtons.forEach((button) => {
+    const presetKey = sanitizePreset(button.dataset.preset);
+    const unlock = getPresetUnlock(presetKey);
+    const unlocked = isPresetUnlocked(presetKey);
+    const active = state.mode !== "daily" && state.settings.preset === presetKey;
+    const badge = button.querySelector(".mode-gallery-badge");
+    const icon = button.querySelector(".mode-gallery-icon");
+    const name = button.querySelector(".mode-gallery-name");
+    const meta = button.querySelector(".mode-gallery-meta");
+    const item = MODE_GALLERY_ITEMS.find((galleryItem) => galleryItem.id === presetKey);
+
+    if (icon && item) {
+      icon.textContent = item.icon;
+    }
+    if (name) {
+      name.textContent = PRESETS[presetKey].label;
+    }
+    if (meta && item) {
+      meta.textContent = item.trait;
+    }
+
+    button.disabled = state.mode === "daily" || !unlocked;
+    button.setAttribute("aria-disabled", String(button.disabled));
+    button.setAttribute("aria-pressed", String(active));
+    button.classList.toggle("active", active);
+    button.classList.toggle("locked", !unlocked);
+
+    if (!badge) {
+      return;
+    }
+
+    if (unlock && !unlocked) {
+      const current = Math.min(unlock.current(state.stats), unlock.target);
+      badge.hidden = false;
+      badge.textContent = `${current}/${unlock.target}`;
+      badge.title = unlock.hint;
+    } else {
+      badge.hidden = true;
+      badge.textContent = "";
+      badge.removeAttribute("title");
+    }
+  });
 }
 
 function refreshThemeHelp(themeKey = state.settings.theme) {
@@ -720,11 +786,15 @@ function refreshPresetHelp() {
 }
 
 function isPresetUnlocked(presetKey) {
-  const unlock = SPECIAL_MODE_UNLOCKS.find((item) => item.id === presetKey);
+  const unlock = getPresetUnlock(presetKey);
   if (!unlock) {
     return true;
   }
   return unlock.current(state.stats) >= unlock.target;
+}
+
+function getPresetUnlock(presetKey) {
+  return SPECIAL_MODE_UNLOCKS.find((item) => item.id === presetKey);
 }
 
 function sanitizeUnlockedPreset(presetKey) {
@@ -875,6 +945,7 @@ function updateModeMessaging() {
     ? "Daily challenge settings are fixed so everyone plays the same board and streaks stay fair."
     : "Custom mode lets you tune size, rules, and hints without affecting your daily streak.";
   toggleDailyControls(isDaily);
+  renderModeGallery();
 }
 
 function onPointerDownCell(event) {
