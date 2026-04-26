@@ -61,6 +61,7 @@ const elements = {
   modeBadge: document.querySelector("#modeBadge"),
   setupHeading: document.querySelector("#setupHeading"),
   presetLabelText: document.querySelector("#presetLabelText"),
+  presetHelp: document.querySelector("#presetHelp"),
   modeDescription: document.querySelector("#modeDescription"),
   boardTitle: document.querySelector("#boardTitle"),
   boardSectionTitle: document.querySelector("#boardSectionTitle"),
@@ -243,6 +244,7 @@ function captureSettings() {
 
 function syncControls() {
   refreshPresetOptions();
+  refreshPresetHelp();
   elements.themeSelect.value = state.settings.theme;
   elements.sizeSelect.value = String(state.settings.size);
   elements.wordCountInput.value = String(state.settings.wordCount);
@@ -487,6 +489,7 @@ function renderProgressionPanel() {
   elements.playNextHint.textContent = recommendation.hint;
   renderUnlockTrack();
   refreshPresetOptions();
+  refreshPresetHelp();
 }
 
 function renderUnlockTrack() {
@@ -508,6 +511,19 @@ function refreshPresetOptions() {
     option.disabled = !unlocked;
     option.textContent = unlocked ? PRESETS[presetKey].label : `${PRESETS[presetKey].label} (Locked)`;
   });
+}
+
+function refreshPresetHelp() {
+  if (state.mode === "daily") {
+    elements.presetHelp.textContent = "Daily mode uses one shared preset so everyone plays the same challenge.";
+    return;
+  }
+  const nextLockedPreset = SPECIAL_MODE_UNLOCKS.find((unlock) => !isPresetUnlocked(unlock.id));
+  if (!nextLockedPreset) {
+    elements.presetHelp.textContent = "All special presets are unlocked. Mix in Mystery Mode, Reverse Rush, or Diagonal Dash for extra variety.";
+    return;
+  }
+  elements.presetHelp.textContent = `${nextLockedPreset.label} unlocks after ${nextLockedPreset.hint.toLowerCase()} • ${Math.min(nextLockedPreset.current(state.stats), nextLockedPreset.target)}/${nextLockedPreset.target}`;
 }
 
 function isPresetUnlocked(presetKey) {
