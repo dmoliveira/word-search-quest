@@ -57,6 +57,7 @@ const elements = {
   timerValue: document.querySelector("#timerValue"),
   statusNote: document.querySelector("#statusNote"),
   themeHelp: document.querySelector("#themeHelp"),
+  themePreviewChips: document.querySelector("#themePreviewChips"),
   heroLeadLabel: document.querySelector("#heroLeadLabel"),
   heroLeadValue: document.querySelector("#heroLeadValue"),
   modeBadge: document.querySelector("#modeBadge"),
@@ -501,6 +502,7 @@ function refreshThemeHelp(themeKey = state.settings.theme) {
   const themeWords = THEMES[themeKey] || [];
   const samples = themeWords.slice(0, 3).join(", ");
   elements.themeHelp.textContent = `Theme picks the word pack only. ${capitalize(themeKey)} sample: ${samples}.`;
+  elements.themePreviewChips.innerHTML = themeWords.slice(0, 4).map((word) => `<span>${word}</span>`).join("");
 }
 
 function renderUnlockTrack() {

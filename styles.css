@@ -492,6 +492,23 @@ input[type="range"] {
   margin-top: -0.1rem;
 }
 
+.theme-preview-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: -0.15rem;
+}
+
+.theme-preview-chips span {
+  border-radius: 999px;
+  padding: 0.32rem 0.7rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-size: 0.83rem;
+  font-weight: 600;
+}
+
 .progression-panel {
   background: linear-gradient(135deg, rgba(108, 140, 255, 0.12), rgba(118, 228, 247, 0.08));
 }
