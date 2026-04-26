@@ -1,5 +1,6 @@
 const STORAGE_KEY = "word-search-quest-state";
 const LEGACY_STORAGE_KEYS = ["word-quest-search-state"];
+const COACH_DISMISSED_KEY = "word-search-quest-coach-dismissed";
 const DAILY_MS = 24 * 60 * 60 * 1000;
 
 const THEMES = {
@@ -72,6 +73,8 @@ const elements = {
   activeThemeLabel: document.querySelector("#activeThemeLabel"),
   activeRulesLabel: document.querySelector("#activeRulesLabel"),
   funModeLabel: document.querySelector("#funModeLabel"),
+  coachStrip: document.querySelector("#coachStrip"),
+  dismissCoach: document.querySelector("#dismissCoach"),
   streakValue: document.querySelector("#streakValue"),
   gamesWonValue: document.querySelector("#gamesWonValue"),
   bestTimeValue: document.querySelector("#bestTimeValue"),
@@ -133,6 +136,7 @@ const state = {
   boardBuilt: false,
   startTime: Date.now(),
   timerInterval: null,
+  coachDismissed: loadCoachDismissed(),
   stats: loadStats()
 };
 
@@ -188,6 +192,7 @@ function bindEvents() {
   elements.shareChallenge.addEventListener("click", shareChallenge);
   elements.hintButton.addEventListener("click", revealHint);
   elements.resetProgress.addEventListener("click", () => startGame(state.seed, state.mode));
+  elements.dismissCoach.addEventListener("click", dismissCoachStrip);
   elements.wordCountInput.addEventListener("input", () => {
     elements.wordCountValue.textContent = elements.wordCountInput.value;
   });
@@ -304,6 +309,7 @@ function startGame(seed, mode) {
   updateModeMessaging();
   renderBoard();
   updateProgress();
+  updateCoachStrip();
   updateUrl();
   setStatus(mode === "daily"
     ? `Today's shared board is ready. Find ${state.words.length} words.`
@@ -479,6 +485,18 @@ function updateProgress() {
   elements.bestTimeValue.textContent = formatBestTime(state.stats.bestTimeSeconds);
   renderProgressionPanel();
   renderWordList();
+  updateCoachStrip();
+}
+
+function updateCoachStrip() {
+  const shouldHide = state.coachDismissed || state.foundWords.size > 0;
+  elements.coachStrip.hidden = shouldHide;
+}
+
+function dismissCoachStrip() {
+  state.coachDismissed = true;
+  updateCoachStrip();
+  saveCoachDismissed();
 }
 
 function renderProgressionPanel() {
@@ -1011,6 +1029,22 @@ function getCellFromElement(element) {
 
 function setStatus(text) {
   elements.statusMessage.textContent = text;
+}
+
+function loadCoachDismissed() {
+  try {
+    return window.localStorage.getItem(COACH_DISMISSED_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function saveCoachDismissed() {
+  try {
+    window.localStorage.setItem(COACH_DISMISSED_KEY, String(state.coachDismissed));
+  } catch {
+    setStatus("Coach tip was hidden, but this browser blocked local save access.");
+  }
 }
 
 function loadStats() {
