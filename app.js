@@ -56,6 +56,7 @@ const elements = {
   foundCount: document.querySelector("#foundCount"),
   timerValue: document.querySelector("#timerValue"),
   statusNote: document.querySelector("#statusNote"),
+  themeHelp: document.querySelector("#themeHelp"),
   heroLeadLabel: document.querySelector("#heroLeadLabel"),
   heroLeadValue: document.querySelector("#heroLeadValue"),
   modeBadge: document.querySelector("#modeBadge"),
@@ -189,6 +190,9 @@ function bindEvents() {
   elements.wordCountInput.addEventListener("input", () => {
     elements.wordCountValue.textContent = elements.wordCountInput.value;
   });
+  elements.themeSelect.addEventListener("change", () => {
+    refreshThemeHelp(elements.themeSelect.value);
+  });
   elements.presetSelect.addEventListener("change", () => {
     applyPreset(elements.presetSelect.value);
   });
@@ -256,6 +260,7 @@ function syncControls() {
   elements.hintsToggle.checked = state.settings.hints;
   elements.mysteryToggle.checked = Boolean(state.settings.mystery);
   updatePresetSpecificLocks();
+  refreshThemeHelp();
 }
 
 function startGame(seed, mode) {
@@ -490,6 +495,12 @@ function renderProgressionPanel() {
   renderUnlockTrack();
   refreshPresetOptions();
   refreshPresetHelp();
+}
+
+function refreshThemeHelp(themeKey = state.settings.theme) {
+  const themeWords = THEMES[themeKey] || [];
+  const samples = themeWords.slice(0, 3).join(", ");
+  elements.themeHelp.textContent = `Theme picks the word pack only. ${capitalize(themeKey)} sample: ${samples}.`;
 }
 
 function renderUnlockTrack() {
