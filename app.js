@@ -819,6 +819,7 @@ function renderProgressionPanel() {
   renderUnlockTrack();
   refreshPresetOptions();
   refreshPresetHelp();
+  renderQuickPresetRail();
   renderModeGallery();
 }
 
